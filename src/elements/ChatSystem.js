@@ -42,11 +42,12 @@ class SimpleChatSystem {
 
     addMessage() {
         if (!this.chatContainer) return;
-        this.addSpecialMessage(
-            this.generateUsername(),
-            this.generateMessage(),
-            this.generateUserColor()
-        );
+
+        const username = UserGenerator.generateUsername();
+        const message = MessageGenerator.generateMessage();
+        const color = UserGenerator.generateUserColor();
+
+        this.addSpecialMessage(username, message, color);
     }
     
     addSpecialMessage(username, message, color) {
@@ -147,50 +148,5 @@ class SimpleChatSystem {
             
             currentY -= msg.height;
         }
-    }
-
-    generateUsername() {
-        return [
-            "xXGamer99", "TTV_Eater", "MrFoodie", "DrChomp", "Sawkhe", "RonLimonMon", "Milk_ai",
-            "KingNom", "QueenHungry", "ProSnack", "LilMunch",
-            "HungryAF", "FoodDestroyer", "SnackKing", "MukbangLover"
-        ][Math.floor(Math.random() * 12)];
-    }
-    
-    generateUserColor() {
-        const usernameColors = [
-            '#FF0000', '#0000FF', '#008000', '#B22222', 
-            '#FF7F50', '#9ACD32', '#FF4500', '#2E8B57',
-            '#DAA520', '#D2691E', '#5F9EA0', '#1E90FF'
-        ];
-        return usernameColors[Math.floor(Math.random() * usernameColors.length)];
-    }
-    
-    generateMessage() {
-        const emotes = ['PogChamp', 'KEKW', 'LUL', 'MonkaS', 'Kappa', 'PepeLaugh', 'FeelsBadMan'];
-        const emote = emotes[Math.floor(Math.random() * emotes.length)];
-        
-        const messages = [
-            `OMG that looks delicious! ${emote}`,
-            `How can you eat so much?? ${emote}`,
-            `${emote} ${emote} ${emote}`,
-            `That's a big bite!`,
-            `Don't choke! MonkaS`,
-            `Yummy yummy! ${emote}`,
-            `I could never eat that much`,
-            `Bruh that's insane LUL`,
-            `That's some next level eating`,
-            `How many calories is that?`,
-            `I'm getting full just watching ${emote}`,
-            `That crunch tho!`,
-            `No way he finishes that`,
-            `Absolute madlad ${emote}`,
-            `This is my dinner show`,
-            `I can't look away`,
-            `That sauce looks spicy!`,
-            `My stomach hurts watching this`
-        ];
-        
-        return messages[Math.floor(Math.random() * messages.length)];
     }
 }

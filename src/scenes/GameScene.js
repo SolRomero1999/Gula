@@ -1,11 +1,9 @@
-
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
     }
 
     init() {
-        // Variables del juego
         this.stomachBar = null;
         this.viewersText = null;
         this.goalText = null;
@@ -24,28 +22,20 @@ class GameScene extends Phaser.Scene {
         this.cuteCooldown = false;
         this.cuteCooldownTimer = null;
         this.cuteOveruseCounter = 0;
-        this.cuteMessages = new CuteMessages();
     }
 
     create() {
-        // Limpieza
         this.cleanup();
-        
-        // Crear elementos
         this.createStomachBar();
         this.createViewersCounter();
         this.createGoalDisplay();
         this.createFood();
         this.createCuteButton();
-        
-        // Temporizadores
         this.setupTimers();
-
         this.chatSystem = new SimpleChatSystem(this);
     }
 
     cleanup() {
-        // Limpiar todos los objetos
         if (this.audienceTimer) this.audienceTimer.destroy();
         if (this.stomachRecoveryTimer) this.stomachRecoveryTimer.destroy();
         if (this.foodItem) this.foodItem.destroy();
@@ -65,13 +55,11 @@ class GameScene extends Phaser.Scene {
         const barHeight = 400;
         const margin = 50;
         const startY = this.cameras.main.height - margin - barHeight;
-        
-        // Fondo de la barra (gris)
+ 
         this.add.graphics()
             .fillStyle(0x333333, 1)
             .fillRect(margin, startY, barWidth, barHeight);
         
-        // Barra de estómago (verde)
         this.stomachBar = this.add.graphics()
             .fillStyle(0x00ff00, 1)
             .fillRect(
@@ -83,7 +71,6 @@ class GameScene extends Phaser.Scene {
     }
 
     createViewersCounter() {
-        // Contador de espectadores en una sola línea "XXX viewers"
         this.viewersText = this.add.text(
             this.cameras.main.width - 20,
             20,
@@ -100,7 +87,6 @@ class GameScene extends Phaser.Scene {
     }
 
     createGoalDisplay() {
-        // Meta actual
         this.goalText = this.add.text(
             this.cameras.main.centerX,
             20,
@@ -117,7 +103,6 @@ class GameScene extends Phaser.Scene {
     }
 
     createFood() {
-        // Comida interactiva
         this.foodItem = this.add.circle(
             this.cameras.main.centerX, 
             this.cameras.main.centerY, 
@@ -133,18 +118,16 @@ class GameScene extends Phaser.Scene {
     }
 
     createCuteButton() {
-        // Botón de actos tiernos en la parte inferior centrada
         this.cuteButton = this.add.rectangle(
             this.cameras.main.centerX,
             this.cameras.main.height - 60,
             200,
             50,
-            0xff69b4 // Rosa
+            0xff69b4 
         )
         .setInteractive()
         .setDepth(5);
         
-        // Texto del botón
         const buttonText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.height - 60,
@@ -161,17 +144,16 @@ class GameScene extends Phaser.Scene {
         // Efecto hover
         this.cuteButton.on('pointerover', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
-                this.cuteButton.setFillStyle(0xff1493); // Rosa más oscuro
+                this.cuteButton.setFillStyle(0xff1493); 
             }
         });
         
         this.cuteButton.on('pointerout', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
-                this.cuteButton.setFillStyle(0xff69b4); // Rosa original
+                this.cuteButton.setFillStyle(0xff69b4); 
             }
         });
         
-        // Acción al hacer click
         this.cuteButton.on('pointerdown', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
                 this.handleCuteAction();
@@ -180,101 +162,79 @@ class GameScene extends Phaser.Scene {
     }
 
     handleFoodClick() {
-        // Reducir estómago y aumentar audiencia
         this.stomachCapacity = Phaser.Math.Clamp(this.stomachCapacity - 10, 0, 100);
         const audienceGain = Math.floor(50 + Math.random() * 50);
         this.audienceRating += audienceGain;
-        
-        // Efecto visual de la comida
+
         this.tweens.add({
             targets: this.foodItem,
             scale: 0.8,
             duration: 100,
             yoyo: true
         });
-        
-        // Animaciones suaves
+
         this.animateStomachBar();
         this.animateAudienceChange(audienceGain);
         this.events.emit('eat');
     }
 
-    handleCuteAction() {
-        // Activar cooldown
-        this.cuteCooldown = true;
-        this.cuteButton.setFillStyle(0x888888); // Gris durante cooldown
-        
-        // Configurar temporizador de cooldown (5 segundos)
-        this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
-            this.cuteCooldown = false;
-            this.cuteButton.setFillStyle(0xff69b4); // Volver al color original
-            this.cuteCooldownTimer = null;
-        });
-        
-        // Determinar si es demasiado abuso de actos tiernos
-        const isOverusing = this.cuteOveruseCounter >= 3 && Math.random() < 0.5;
-        
-        if (isOverusing) {
-            // Reacción negativa por abuso
-            const audienceLoss = Math.floor(30 + Math.random() * 70);
-            this.audienceRating = Math.max(0, this.audienceRating - audienceLoss);
-            
-            // Mostrar mensaje cringe en el chat
-            const cringeMessage = this.cuteMessages.getRandomCringeReaction();
-            this.chatSystem.addSpecialMessage("Chat", cringeMessage, "#ff5555");
-            
-            // Resetear contador de abuso
-            this.cuteOveruseCounter = 0;
-            
-            // Animación de audiencia
-            this.animateAudienceChange(-audienceLoss);
-            
-            // Efecto visual negativo
-            this.cameras.main.shake(200, 0.01);
-            this.tweens.add({
-                targets: this.cuteButton,
-                tint: 0xff0000,
-                duration: 300,
-                yoyo: true
-            });
-        } else {
-            // Reacción positiva normal
-            const audienceGain = Math.floor(80 + Math.random() * 120);
-            this.audienceRating += audienceGain;
-            this.cuteOveruseCounter++;
-            
-            // Mostrar mensaje tierno en el chat
-            const catLine = this.cuteMessages.getRandomCatLine();
-            const positiveReaction = this.cuteMessages.getRandomPositiveReaction();
-            
-            this.chatSystem.addSpecialMessage("Gatito", catLine, "#ff69b4");
-            this.chatSystem.addSpecialMessage("Chat", positiveReaction, "#55ff55");
-            
-            // Animación de audiencia
-            this.animateAudienceChange(audienceGain);
-            
-            // Efecto visual positivo
-            this.cameras.main.flash(200, 255, 192, 203);
-            this.tweens.add({
-                targets: this.cuteButton,
-                tint: 0xffffff,
-                duration: 300,
-                yoyo: true
-            });
-        }
-        
-        // Efecto de botón presionado
+handleCuteAction() {
+    this.cuteCooldown = true;
+    this.cuteButton.setFillStyle(0x888888); 
+    this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
+        this.cuteCooldown = false;
+        this.cuteButton.setFillStyle(0xff69b4); 
+        this.cuteCooldownTimer = null;
+    });
+    
+    const isOverusing = this.cuteOveruseCounter >= 3 && Math.random() < 0.5;
+    
+    if (isOverusing) {
+        const audienceLoss = Math.floor(30 + Math.random() * 70);
+        this.audienceRating = Math.max(0, this.audienceRating - audienceLoss);
+        const cringeMessage = MessageGenerator.getRandomCringeReaction(); // Cambiado aquí
+        this.chatSystem.addSpecialMessage("Chat", cringeMessage, "#ff5555");
+        this.cuteOveruseCounter = 0;
+        this.animateAudienceChange(-audienceLoss);
+        this.cameras.main.shake(200, 0.01);
         this.tweens.add({
             targets: this.cuteButton,
-            scaleX: 0.9,
-            scaleY: 0.9,
-            duration: 100,
+            tint: 0xff0000,
+            duration: 300,
+            yoyo: true
+        });
+    } else {
+        const audienceGain = Math.floor(80 + Math.random() * 120);
+        this.audienceRating += audienceGain;
+        this.cuteOveruseCounter++;
+        
+        const catLine = CuteActionManager.getRandomCatLine(); // Cambiado aquí
+        const positiveReaction = MessageGenerator.getRandomPositiveReaction(); // Cambiado aquí
+        
+        this.chatSystem.addSpecialMessage("Gatito", catLine, "#ff69b4");
+        this.chatSystem.addSpecialMessage("Chat", positiveReaction, "#55ff55");
+        
+        this.animateAudienceChange(audienceGain);
+        
+        this.cameras.main.flash(200, 255, 192, 203);
+        this.tweens.add({
+            targets: this.cuteButton,
+            tint: 0xffffff,
+            duration: 300,
             yoyo: true
         });
     }
+    
+    this.tweens.add({
+        targets: this.cuteButton,
+        scaleX: 0.9,
+        scaleY: 0.9,
+        duration: 100,
+        yoyo: true
+    });
+}
 
     setupTimers() {
-        // Temporizador de pérdida de audiencia (5% cada 5 segundos)
         this.audienceTimer = this.time.addEvent({
             delay: 5000,
             callback: () => {
@@ -288,7 +248,6 @@ class GameScene extends Phaser.Scene {
             loop: true
         });
         
-        // Temporizador de recuperación de estómago más rápido (3% cada segundo)
         this.stomachRecoveryTimer = this.time.addEvent({
             delay: 1000,
             callback: () => {
@@ -303,7 +262,6 @@ class GameScene extends Phaser.Scene {
     }
 
     animateStomachBar() {
-        // Animación suave de la barra de estómago
         this.tweens.add({
             targets: this,
             displayStomach: this.stomachCapacity,
@@ -321,7 +279,7 @@ class GameScene extends Phaser.Scene {
         
         const startValue = this.displayAudience;
         const endValue = this.audienceRating;
-        const duration = Math.min(800, Math.abs(change) * 15); // Ajuste de velocidad
+        const duration = Math.min(800, Math.abs(change) * 15); 
         
         this.tweens.add({
             targets: this,
@@ -329,14 +287,13 @@ class GameScene extends Phaser.Scene {
             duration: duration,
             ease: 'Power1',
             onUpdate: () => {
-                // Actualizar texto en una sola línea "XXX viewers"
                 this.viewersText.setText(`${Math.floor(this.displayAudience)} viewers`);
                 
                 // Cambiar color
                 if (this.displayAudience < startValue) {
-                    this.viewersText.setColor('#ff5555'); // Rojo cuando disminuye
+                    this.viewersText.setColor('#ff5555'); 
                 } else {
-                    this.viewersText.setColor('#55ff55'); // Verde cuando aumenta
+                    this.viewersText.setColor('#55ff55'); 
                 }
                 
                 this.updateGoalDisplay();
@@ -347,10 +304,9 @@ class GameScene extends Phaser.Scene {
                 }
             },
             onComplete: () => {
-                this.viewersText.setColor('#ffffff'); // Blanco al finalizar
+                this.viewersText.setColor('#ffffff'); 
                 this.animatingNumbers = false;
-                
-                // Verificar condiciones de fin de juego
+
                 if (this.audienceRating <= 0) {
                     this.triggerGameOver('audience');
                 }
@@ -372,8 +328,7 @@ class GameScene extends Phaser.Scene {
                 barWidth, 
                 barHeight * (this.displayStomach / 100)
             );
-        
-        // Verificar fin de juego por estómago vacío
+
         if (this.stomachCapacity <= 0 && !this.isGameOver) {
             this.triggerGameOver('stomach');
         }
@@ -396,10 +351,8 @@ class GameScene extends Phaser.Scene {
     }
 
     showGoalReachedEffect() {
-        // Efecto de flash morado
         this.cameras.main.flash(300, 145, 71, 255);
-        
-        // Mensaje de meta alcanzada
+
         const congratsText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 100,
@@ -415,7 +368,6 @@ class GameScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(20);
         
-        // Desvanecer el mensaje
         this.tweens.add({
             targets: congratsText,
             alpha: 0,
