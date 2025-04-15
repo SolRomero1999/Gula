@@ -141,7 +141,6 @@ class GameScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(6);
         
-        // Efecto hover
         this.cuteButton.on('pointerover', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
                 this.cuteButton.setFillStyle(0xff1493); 
@@ -178,61 +177,45 @@ class GameScene extends Phaser.Scene {
         this.events.emit('eat');
     }
 
-handleCuteAction() {
-    this.cuteCooldown = true;
-    this.cuteButton.setFillStyle(0x888888); 
-    this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
-        this.cuteCooldown = false;
-        this.cuteButton.setFillStyle(0xff69b4); 
-        this.cuteCooldownTimer = null;
-    });
-    
-    const isOverusing = this.cuteOveruseCounter >= 3 && Math.random() < 0.5;
-    
-    if (isOverusing) {
-        const audienceLoss = Math.floor(30 + Math.random() * 70);
-        this.audienceRating = Math.max(0, this.audienceRating - audienceLoss);
-        const cringeMessage = MessageGenerator.getRandomCringeReaction(); // Cambiado aquí
-        this.chatSystem.addSpecialMessage("Chat", cringeMessage, "#ff5555");
-        this.cuteOveruseCounter = 0;
-        this.animateAudienceChange(-audienceLoss);
-        this.cameras.main.shake(200, 0.01);
-        this.tweens.add({
-            targets: this.cuteButton,
-            tint: 0xff0000,
-            duration: 300,
-            yoyo: true
+    handleCuteAction() {
+        this.cuteCooldown = true;
+        this.cuteButton.setFillStyle(0x888888); 
+        this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
+            this.cuteCooldown = false;
+            this.cuteButton.setFillStyle(0xff69b4); 
+            this.cuteCooldownTimer = null;
         });
-    } else {
-        const audienceGain = Math.floor(80 + Math.random() * 120);
-        this.audienceRating += audienceGain;
-        this.cuteOveruseCounter++;
         
-        const catLine = CuteActionManager.getRandomCatLine(); // Cambiado aquí
-        const positiveReaction = MessageGenerator.getRandomPositiveReaction(); // Cambiado aquí
+        const result = CuteActionManager.executeCuteAction(this);
         
-        this.chatSystem.addSpecialMessage("Gatito", catLine, "#ff69b4");
-        this.chatSystem.addSpecialMessage("Chat", positiveReaction, "#55ff55");
+        if (result.isOverusing) {
+            this.animateAudienceChange(-result.audienceChange);
+            this.cameras.main.shake(200, 0.01);
+            this.tweens.add({
+                targets: this.cuteButton,
+                tint: 0xff0000,
+                duration: 300,
+                yoyo: true
+            });
+        } else {
+            this.animateAudienceChange(result.audienceChange);
+            this.cameras.main.flash(200, 255, 192, 203);
+            this.tweens.add({
+                targets: this.cuteButton,
+                tint: 0xffffff,
+                duration: 300,
+                yoyo: true
+            });
+        }
         
-        this.animateAudienceChange(audienceGain);
-        
-        this.cameras.main.flash(200, 255, 192, 203);
         this.tweens.add({
             targets: this.cuteButton,
-            tint: 0xffffff,
-            duration: 300,
+            scaleX: 0.9,
+            scaleY: 0.9,
+            duration: 100,
             yoyo: true
         });
     }
-    
-    this.tweens.add({
-        targets: this.cuteButton,
-        scaleX: 0.9,
-        scaleY: 0.9,
-        duration: 100,
-        yoyo: true
-    });
-}
 
     setupTimers() {
         this.audienceTimer = this.time.addEvent({
@@ -289,7 +272,6 @@ handleCuteAction() {
             onUpdate: () => {
                 this.viewersText.setText(`${Math.floor(this.displayAudience)} viewers`);
                 
-                // Cambiar color
                 if (this.displayAudience < startValue) {
                     this.viewersText.setColor('#ff5555'); 
                 } else {
@@ -298,7 +280,6 @@ handleCuteAction() {
                 
                 this.updateGoalDisplay();
                 
-                // Verificar metas durante la animación
                 if (this.displayAudience >= this.audienceGoal) {
                     this.updateAudienceGoal();
                 }
