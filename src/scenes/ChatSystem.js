@@ -1,3 +1,4 @@
+
 class SimpleChatSystem {
     constructor(scene) {
         this.scene = scene;
@@ -41,8 +42,15 @@ class SimpleChatSystem {
 
     addMessage() {
         if (!this.chatContainer) return;
-        
-        const messageData = this.generateTwitchStyleMessage();
+        this.addSpecialMessage(
+            this.generateUsername(),
+            this.generateMessage(),
+            this.generateUserColor()
+        );
+    }
+    
+    addSpecialMessage(username, message, color) {
+        if (!this.chatContainer) return;
         
         // Crear un contenedor para agrupar el nombre y el mensaje
         const messageContainer = this.scene.add.container(10, this.panelHeight);
@@ -52,10 +60,10 @@ class SimpleChatSystem {
         const usernameText = this.scene.add.text(
             0,
             0,
-            `${messageData.username}: `,
+            `${username}: `,
             {
                 font: '16px Arial',
-                fill: messageData.color,
+                fill: color,
                 padding: { x: 5, y: 2 }
             }
         ).setOrigin(0, 0);
@@ -64,7 +72,7 @@ class SimpleChatSystem {
         const messageText = this.scene.add.text(
             usernameText.width,
             0,
-            messageData.message,
+            message,
             {
                 font: '16px Arial',
                 fill: '#FFFFFF',
@@ -141,20 +149,24 @@ class SimpleChatSystem {
         }
     }
 
-    generateTwitchStyleMessage() {
-        const username = [
+    generateUsername() {
+        return [
             "xXGamer99", "TTV_Eater", "MrFoodie", "DrChomp", "Sawkhe", "RonLimonMon", "Milk_ai",
             "KingNom", "QueenHungry", "ProSnack", "LilMunch",
             "HungryAF", "FoodDestroyer", "SnackKing", "MukbangLover"
         ][Math.floor(Math.random() * 12)];
-        
+    }
+    
+    generateUserColor() {
         const usernameColors = [
             '#FF0000', '#0000FF', '#008000', '#B22222', 
             '#FF7F50', '#9ACD32', '#FF4500', '#2E8B57',
             '#DAA520', '#D2691E', '#5F9EA0', '#1E90FF'
         ];
-        const userColor = usernameColors[Math.floor(Math.random() * usernameColors.length)];
-        
+        return usernameColors[Math.floor(Math.random() * usernameColors.length)];
+    }
+    
+    generateMessage() {
         const emotes = ['PogChamp', 'KEKW', 'LUL', 'MonkaS', 'Kappa', 'PepeLaugh', 'FeelsBadMan'];
         const emote = emotes[Math.floor(Math.random() * emotes.length)];
         
@@ -179,10 +191,6 @@ class SimpleChatSystem {
             `My stomach hurts watching this`
         ];
         
-        return {
-            username: username,
-            message: messages[Math.floor(Math.random() * messages.length)],
-            color: userColor
-        };
+        return messages[Math.floor(Math.random() * messages.length)];
     }
 }

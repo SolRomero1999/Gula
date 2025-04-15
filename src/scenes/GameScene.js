@@ -1,3 +1,4 @@
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
@@ -9,6 +10,7 @@ class GameScene extends Phaser.Scene {
         this.viewersText = null;
         this.goalText = null;
         this.foodItem = null;
+        this.cuteButton = null;
         this.stomachCapacity = 100;
         this.displayStomach = 100;
         this.audienceRating = 100;
@@ -19,6 +21,10 @@ class GameScene extends Phaser.Scene {
         this.timeElapsed = 0;
         this.audienceGoal = 1000;
         this.animatingNumbers = false;
+        this.cuteCooldown = false;
+        this.cuteCooldownTimer = null;
+        this.cuteOveruseCounter = 0;
+        this.cuteMessages = new CuteMessages();
     }
 
     create() {
@@ -30,6 +36,7 @@ class GameScene extends Phaser.Scene {
         this.createViewersCounter();
         this.createGoalDisplay();
         this.createFood();
+        this.createCuteButton();
         
         // Temporizadores
         this.setupTimers();
@@ -45,6 +52,8 @@ class GameScene extends Phaser.Scene {
         if (this.stomachBar) this.stomachBar.destroy();
         if (this.viewersText) this.viewersText.destroy();
         if (this.goalText) this.goalText.destroy();
+        if (this.cuteButton) this.cuteButton.destroy();
+        if (this.cuteCooldownTimer) this.cuteCooldownTimer.destroy();
         
         this.time.removeAllEvents();
         this.tweens.killAll();
@@ -123,6 +132,53 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    createCuteButton() {
+        // Botón de actos tiernos en la parte inferior centrada
+        this.cuteButton = this.add.rectangle(
+            this.cameras.main.centerX,
+            this.cameras.main.height - 60,
+            200,
+            50,
+            0xff69b4 // Rosa
+        )
+        .setInteractive()
+        .setDepth(5);
+        
+        // Texto del botón
+        const buttonText = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.height - 60,
+            'Acto Tierno',
+            {
+                font: '20px Arial',
+                fill: '#ffffff',
+                fontWeight: 'bold'
+            }
+        )
+        .setOrigin(0.5)
+        .setDepth(6);
+        
+        // Efecto hover
+        this.cuteButton.on('pointerover', () => {
+            if (!this.cuteCooldown && !this.isGameOver) {
+                this.cuteButton.setFillStyle(0xff1493); // Rosa más oscuro
+            }
+        });
+        
+        this.cuteButton.on('pointerout', () => {
+            if (!this.cuteCooldown && !this.isGameOver) {
+                this.cuteButton.setFillStyle(0xff69b4); // Rosa original
+            }
+        });
+        
+        // Acción al hacer click
+        this.cuteButton.on('pointerdown', () => {
+            if (!this.cuteCooldown && !this.isGameOver) {
+                this.handleCuteAction();
+            }
+        });
+    }
+
     handleFoodClick() {
         // Reducir estómago y aumentar audiencia
         this.stomachCapacity = Phaser.Math.Clamp(this.stomachCapacity - 10, 0, 100);
@@ -141,6 +197,80 @@ class GameScene extends Phaser.Scene {
         this.animateStomachBar();
         this.animateAudienceChange(audienceGain);
         this.events.emit('eat');
+    }
+
+    handleCuteAction() {
+        // Activar cooldown
+        this.cuteCooldown = true;
+        this.cuteButton.setFillStyle(0x888888); // Gris durante cooldown
+        
+        // Configurar temporizador de cooldown (5 segundos)
+        this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
+            this.cuteCooldown = false;
+            this.cuteButton.setFillStyle(0xff69b4); // Volver al color original
+            this.cuteCooldownTimer = null;
+        });
+        
+        // Determinar si es demasiado abuso de actos tiernos
+        const isOverusing = this.cuteOveruseCounter >= 3 && Math.random() < 0.5;
+        
+        if (isOverusing) {
+            // Reacción negativa por abuso
+            const audienceLoss = Math.floor(30 + Math.random() * 70);
+            this.audienceRating = Math.max(0, this.audienceRating - audienceLoss);
+            
+            // Mostrar mensaje cringe en el chat
+            const cringeMessage = this.cuteMessages.getRandomCringeReaction();
+            this.chatSystem.addSpecialMessage("Chat", cringeMessage, "#ff5555");
+            
+            // Resetear contador de abuso
+            this.cuteOveruseCounter = 0;
+            
+            // Animación de audiencia
+            this.animateAudienceChange(-audienceLoss);
+            
+            // Efecto visual negativo
+            this.cameras.main.shake(200, 0.01);
+            this.tweens.add({
+                targets: this.cuteButton,
+                tint: 0xff0000,
+                duration: 300,
+                yoyo: true
+            });
+        } else {
+            // Reacción positiva normal
+            const audienceGain = Math.floor(80 + Math.random() * 120);
+            this.audienceRating += audienceGain;
+            this.cuteOveruseCounter++;
+            
+            // Mostrar mensaje tierno en el chat
+            const catLine = this.cuteMessages.getRandomCatLine();
+            const positiveReaction = this.cuteMessages.getRandomPositiveReaction();
+            
+            this.chatSystem.addSpecialMessage("Gatito", catLine, "#ff69b4");
+            this.chatSystem.addSpecialMessage("Chat", positiveReaction, "#55ff55");
+            
+            // Animación de audiencia
+            this.animateAudienceChange(audienceGain);
+            
+            // Efecto visual positivo
+            this.cameras.main.flash(200, 255, 192, 203);
+            this.tweens.add({
+                targets: this.cuteButton,
+                tint: 0xffffff,
+                duration: 300,
+                yoyo: true
+            });
+        }
+        
+        // Efecto de botón presionado
+        this.tweens.add({
+            targets: this.cuteButton,
+            scaleX: 0.9,
+            scaleY: 0.9,
+            duration: 100,
+            yoyo: true
+        });
     }
 
     setupTimers() {
