@@ -1,4 +1,3 @@
-
 class SimpleChatSystem {
     constructor(scene) {
         this.scene = scene;
@@ -6,7 +5,9 @@ class SimpleChatSystem {
         this.maxMessages = 15;
         this.chatContainer = null;
         this.lineHeight = 32;
-        this.panelHeight = 500; // Altura fija del panel de chat
+        this.panelHeight = 500; 
+        this.lastMessageTime = 0;
+        this.messageCooldown = 1000;
         
         this.scene.events.once('create', () => {
             this.setupChat();
@@ -15,65 +16,86 @@ class SimpleChatSystem {
     }
 
     setupChat() {
-        if (!this.scene.cameras || !this.scene.cameras.main) {
-            console.error('Cameras system not available');
-            return;
-        }
+        if (!this.scene.cameras || !this.scene.cameras.main) return;
         
-        const chatX = this.scene.cameras.main.width - 270;
+        const camera = this.scene.cameras.main;
+        const chatX = camera.width - 270;
         const chatY = 70;
+        this.panelHeight = camera.height - chatY - 20;
         
-        this.chatContainer = this.scene.add.container(chatX, chatY);
+        this.chatContainer = this.scene.add.container(chatX, chatY)
+            .setDepth(50);
         
         const chatBackground = this.scene.add.graphics()
             .fillStyle(0x000000, 0.7)
             .fillRect(0, 0, 260, this.panelHeight)
             .lineStyle(1, 0x9147ff, 0.5)
-            .strokeRect(0, 0, 260, this.panelHeight);
+            .strokeRect(0, 0, 260, this.panelHeight)
+            .setDepth(50);
         
         this.chatContainer.add(chatBackground);
     }
-
+    
     setupEventListeners() {
-        this.scene.events.on('eat', () => {
-            this.addMessage();
+        this.scene.events.on('eat', () => this.addMessage());
+        this.scene.events.on('inactivityWarning', () => this.addInactivityMessage());
+        this.scene.events.on('inactivityPenalty', () => {
+            if (this.canSendMessage()) this.addInactivityMessage();
         });
+        this.scene.events.on('fullStomachWarning', () => this.addAngryMessage());
+        this.scene.events.on('fullStomachPenalty', () => {
+            if (this.canSendMessage()) this.addAngryMessage();
+        });
+    }
+    
+    canSendMessage() {
+        const now = this.scene.time.now;
+        if (now - this.lastMessageTime > this.messageCooldown) {
+            this.lastMessageTime = now;
+            return true;
+        }
+        return false;
     }
 
     addMessage() {
         if (!this.chatContainer) return;
-
         const username = UserGenerator.generateUsername();
         const message = MessageGenerator.generateMessage();
         const color = UserGenerator.generateUserColor();
-
+        this.addSpecialMessage(username, message, color);
+    }
+    
+    addInactivityMessage() {
+        if (!this.chatContainer) return;
+        const username = UserGenerator.generateUsername();
+        const messages = MessageGenerator.getBoredMessages();
+        const message = messages[Math.floor(Math.random() * messages.length)];
+        const color = UserGenerator.generateUserColor();
+        this.addSpecialMessage(username, message, color);
+    }
+    
+    addAngryMessage() {
+        if (!this.chatContainer) return;
+        const username = UserGenerator.generateUsername();
+        const messages = MessageGenerator.getAngryMukbangMessages();
+        const message = messages[Math.floor(Math.random() * messages.length)];
+        const color = UserGenerator.generateUserColor();
         this.addSpecialMessage(username, message, color);
     }
     
     addSpecialMessage(username, message, color) {
         if (!this.chatContainer) return;
         
-        // Crear un contenedor para agrupar el nombre y el mensaje
         const messageContainer = this.scene.add.container(10, this.panelHeight);
         this.chatContainer.add(messageContainer);
         
-        // Texto del nombre de usuario (con color)
         const usernameText = this.scene.add.text(
-            0,
-            0,
-            `${username}: `,
-            {
-                font: '16px Arial',
-                fill: color,
-                padding: { x: 5, y: 2 }
-            }
+            0, 0, `${username}: `,
+            { font: '16px Arial', fill: color, padding: { x: 5, y: 2 } }
         ).setOrigin(0, 0);
         
-        // Texto del mensaje (en blanco)
         const messageText = this.scene.add.text(
-            usernameText.width,
-            0,
-            message,
+            usernameText.width, 0, message,
             {
                 font: '16px Arial',
                 fill: '#FFFFFF',
@@ -84,17 +106,13 @@ class SimpleChatSystem {
         ).setOrigin(0, 0);
         
         messageContainer.add([usernameText, messageText]);
-        
-        // Calcular altura total del mensaje
         const totalHeight = Math.max(usernameText.height, messageText.height) + 8;
         
-        // Añadir el nuevo mensaje
         this.chatMessages.push({
             container: messageContainer,
             height: totalHeight
         });
         
-        // Animación de aparición
         messageContainer.setAlpha(0);
         this.scene.tweens.add({
             targets: messageContainer,
@@ -102,7 +120,6 @@ class SimpleChatSystem {
             duration: 300
         });
         
-        // Reposicionar y recortar mensajes si es necesario
         this.organizeMessages();
     }
 
@@ -110,17 +127,14 @@ class SimpleChatSystem {
         let totalHeight = 0;
         let firstVisibleIndex = 0;
         
-        // Calcular cuántos mensajes caben (empezando por los más nuevos)
         for (let i = this.chatMessages.length - 1; i >= 0; i--) {
             totalHeight += this.chatMessages[i].height;
-            
             if (totalHeight > this.panelHeight) {
                 firstVisibleIndex = i + 1;
                 break;
             }
         }
         
-        // Eliminar mensajes que ya no caben
         if (firstVisibleIndex > 0) {
             for (let i = 0; i < firstVisibleIndex; i++) {
                 this.chatMessages[i].container.destroy();
@@ -128,24 +142,19 @@ class SimpleChatSystem {
             this.chatMessages = this.chatMessages.slice(firstVisibleIndex);
         }
         
-        // Reposicionar todos los mensajes visibles
         this.repositionMessages();
     }
 
     repositionMessages() {
-        let currentY = this.panelHeight; // Comenzar desde abajo
-        
-        // Posicionar todos los mensajes de abajo hacia arriba
+        let currentY = this.panelHeight;
         for (let i = this.chatMessages.length - 1; i >= 0; i--) {
             const msg = this.chatMessages[i];
-            
             this.scene.tweens.add({
                 targets: msg.container,
                 y: currentY - msg.height,
                 duration: 200,
                 ease: 'Power1'
             });
-            
             currentY -= msg.height;
         }
     }

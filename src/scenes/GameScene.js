@@ -3,6 +3,13 @@ class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
     }
 
+    preload() {
+        this.load.image('background', '../assets/background.jpg');
+        this.load.image('ramen_bowl1', '../assets/ramen_bowl1.png');
+        this.load.image('desk', '../assets/desk.png'); 
+        this.load.image('streamer', '../assets/streamer.png');
+    }
+
     init() {
         this.isGameOver = false;
         this.audienceTimer = null;
@@ -15,32 +22,80 @@ class GameScene extends Phaser.Scene {
     create() {
         this.cleanup();
         
-        // Inicializar MokbanManager (maneja toda la lógica de comer)
+        // 0: Fondo
+        this.background = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'background'
+        ).setOrigin(0.5, 0.5)
+         .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+         .setDepth(0);
+        
+        // 5: Gato
+        this.cat = this.add.image(
+            this.cameras.main.centerX + 90,
+            this.cameras.main.centerY + 40,
+            'streamer'
+        ).setOrigin(0.5, 0.5)
+         .setScale(0.7)
+         .setDepth(5);
+        
+        // 8: Sombra mesa
+        this.deskShadow = this.add.graphics()
+            .fillStyle(0x000000, 0.3)
+            .fillEllipse(
+                this.cameras.main.centerX,
+                this.cameras.main.centerY + 140,
+                450,
+                20
+            ).setDepth(8);
+        
+        // 10: Mesa
+        this.desk = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY + 100,
+            'desk'
+        ).setOrigin(0.5, 0.5)
+         .setScale(0.8)
+         .setDepth(10);
+        
+        // 15: Tazón (manejado por MokbanManager)
         this.mokbanManager = new MokbanManager(this);
         
-        // Crear botón de acto tierno
-        this.createCuteButton();
+        // 20: Barra hambre (manejado por MokbanManager)
         
-        // Configurar temporizador de audiencia
-        this.setupAudienceTimer();
-        
-        // Inicializar sistema de chat
+        // 50: Chat
         this.chatSystem = new SimpleChatSystem(this);
         
-        // Inicializar AudienceManager
+        // 60: Botón acto tierno
+        this.createCuteButton();
+        
+        // Sistemas adicionales
+        this.setupAudienceTimer();
         this.audienceManager = new AudienceManager(this);
+        
+        // Animación gato
+        this.tweens.add({
+            targets: this.cat,
+            y: this.cat.y + 3,
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
     }
 
     cleanup() {
-        // Limpiar todos los componentes
         if (this.audienceTimer) this.audienceTimer.destroy();
         if (this.cuteButton) this.cuteButton.destroy();
         if (this.cuteCooldownTimer) this.cuteCooldownTimer.destroy();
         if (this.audienceManager) this.audienceManager.cleanup();
         if (this.mokbanManager) this.mokbanManager.cleanup();
         if (this.currentDialogueBox) this.currentDialogueBox.destroy();
+        if (this.desk) this.desk.destroy();
+        if (this.cat) this.cat.destroy();
+        if (this.deskShadow) this.deskShadow.destroy();
         
-        // Limpiar eventos y tweens
         this.time.removeAllEvents();
         this.tweens.killAll();
         this.children.removeAll();
@@ -48,17 +103,16 @@ class GameScene extends Phaser.Scene {
 
     createCuteButton() {
         this.cuteButton = this.add.rectangle(
-            this.cameras.main.centerX,
-            this.cameras.main.height - 60,
+            this.cameras.main.centerX,  // Centrado en X
+            this.cameras.main.height - 60,  // Misma posición en Y
             200,
             50,
             0xff69b4 
         )
         .setInteractive()
-        .setDepth(5);
-        
+        .setDepth(60);
         const buttonText = this.add.text(
-            this.cameras.main.centerX,
+            this.cameras.main.centerX,  // Centrado en X
             this.cameras.main.height - 60,
             'Acto Tierno',
             {
@@ -66,24 +120,21 @@ class GameScene extends Phaser.Scene {
                 fill: '#ffffff',
                 fontWeight: 'bold'
             }
-        )
-        .setOrigin(0.5)
-        .setDepth(6);
+        ).setOrigin(0.5)
+         .setDepth(61);
         
-        // Efectos hover del botón
         this.cuteButton.on('pointerover', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
-                this.cuteButton.setFillStyle(0xff1493); 
+                this.cuteButton.setFillStyle(0xff1493);
             }
         });
         
         this.cuteButton.on('pointerout', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
-                this.cuteButton.setFillStyle(0xff69b4); 
+                this.cuteButton.setFillStyle(0xff69b4);
             }
         });
         
-        // Acción al hacer click
         this.cuteButton.on('pointerdown', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
                 this.handleCuteAction();
@@ -92,21 +143,16 @@ class GameScene extends Phaser.Scene {
     }
 
     handleCuteAction() {
-        // Activar cooldown
         this.cuteCooldown = true;
-        this.cuteButton.setFillStyle(0x888888); 
+        this.cuteButton.setFillStyle(0x888888);
         
-        // Temporizador para resetear cooldown
         this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
             this.cuteCooldown = false;
-            this.cuteButton.setFillStyle(0xff69b4); 
+            this.cuteButton.setFillStyle(0xff69b4);
             this.cuteCooldownTimer = null;
         });
         
-        // Ejecutar acción tierna
         const result = CuteActionManager.executeCuteAction(this);
-        
-        // Aplicar efecto en la audiencia
         const gameOver = this.audienceManager.changeRating(
             result.isOverusing ? -result.audienceChange : result.audienceChange
         );
@@ -116,7 +162,6 @@ class GameScene extends Phaser.Scene {
             return;
         }
         
-        // Efectos visuales según el resultado
         if (result.isOverusing) {
             this.cameras.main.shake(200, 0.01);
             this.tweens.add({
@@ -135,7 +180,6 @@ class GameScene extends Phaser.Scene {
             });
         }
         
-        // Animación del botón
         this.tweens.add({
             targets: this.cuteButton,
             scaleX: 0.9,
@@ -146,20 +190,15 @@ class GameScene extends Phaser.Scene {
     }
 
     setupAudienceTimer() {
-        // Timer para pérdida gradual de audiencia
         this.audienceTimer = this.time.addEvent({
             delay: 5000,
             callback: () => {
                 if (!this.isGameOver) {
                     const lostAudience = Math.max(1, Math.floor(this.audienceManager.rating * 0.05));
                     const gameOver = this.audienceManager.changeRating(-lostAudience);
-                    
-                    if (gameOver) {
-                        this.triggerGameOver('audience');
-                    }
+                    if (gameOver) this.triggerGameOver('audience');
                 }
             },
-            callbackScope: this,
             loop: true
         });
     }
@@ -167,8 +206,7 @@ class GameScene extends Phaser.Scene {
     triggerGameOver(loseType) {
         this.isGameOver = true;
         this.cleanup();
-        
-        this.scene.start('GameOverScene', { 
+        this.scene.start('GameOverScene', {
             loseType: loseType,
             audienceRating: this.audienceManager.rating,
             audienceGoal: this.audienceManager.goal
@@ -176,68 +214,54 @@ class GameScene extends Phaser.Scene {
     }
     
     addDialogueBox(text, character, styleOptions = {}) {
-        // Configuración por defecto
-        const defaultStyle = {
+        if (this.currentDialogueBox) {
+            this.currentDialogueBox.destroy();
+        }
+        
+        const style = {
             boxColor: 0x000000,
             borderColor: 0xFFFFFF,
             textColor: '#FFFFFF',
             borderThickness: 2,
             padding: 15,
             maxWidth: 300,
-            boxYPosition: 150
+            boxYPosition: 150,
+            ...styleOptions
         };
         
-        // Combinar con opciones personalizadas
-        const style = { ...defaultStyle, ...styleOptions };
-        
-        // Destruir el diálogo anterior si existe
-        if (this.currentDialogueBox) {
-            this.currentDialogueBox.destroy();
-        }
-        
-        // Crear el fondo del diálogo
-        const dialogueBox = this.add.graphics();
-        
-        // Estilo del texto
-        const textStyle = {
-            font: '20px Arial',
-            fill: style.textColor,
-            wordWrap: { width: style.maxWidth - 2 * style.padding }
-        };
-        
-        // Crear el texto del diálogo
         const dialogueText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition,
             text,
-            textStyle
+            {
+                font: '20px Arial',
+                fill: style.textColor,
+                wordWrap: { width: style.maxWidth - 2 * style.padding }
+            }
         ).setOrigin(0.5, 0);
         
-        // Calcular dimensiones del cuadro
         const textBounds = dialogueText.getBounds();
         const boxWidth = textBounds.width + 2 * style.padding;
         const boxHeight = textBounds.height + 2 * style.padding;
         
-        // Dibujar el cuadro de diálogo
-        dialogueBox.fillStyle(style.boxColor, 0.8);
-        dialogueBox.fillRoundedRect(
-            this.cameras.main.centerX - boxWidth/2,
-            style.boxYPosition - style.padding,
-            boxWidth,
-            boxHeight,
-            10
-        );
+        const dialogueBox = this.add.graphics()
+            .fillStyle(style.boxColor, 0.8)
+            .fillRoundedRect(
+                this.cameras.main.centerX - boxWidth/2,
+                style.boxYPosition - style.padding,
+                boxWidth,
+                boxHeight,
+                10
+            )
+            .lineStyle(style.borderThickness, style.borderColor)
+            .strokeRoundedRect(
+                this.cameras.main.centerX - boxWidth/2,
+                style.boxYPosition - style.padding,
+                boxWidth,
+                boxHeight,
+                10
+            );
         
-        dialogueBox.lineStyle(style.borderThickness, style.borderColor);
-        dialogueBox.strokeRoundedRect(
-            this.cameras.main.centerX - boxWidth/2,
-            style.boxYPosition - style.padding,
-            boxWidth,
-            boxHeight,
-            10
-        );
-        
-        // Nombre del personaje (centrado sobre el cuadro)
         const nameText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition - style.padding - 20,
@@ -246,27 +270,22 @@ class GameScene extends Phaser.Scene {
                 font: '16px Arial',
                 fill: style.textColor,
                 backgroundColor: style.boxColor,
-                padding: { x: 10, y: 5 },
-                align: 'center'
+                padding: { x: 10, y: 5 }
             }
         ).setOrigin(0.5, 0.5);
         
-        // Grupo para manejar todos los elementos
-        this.currentDialogueBox = this.add.container();
-        this.currentDialogueBox.add([dialogueBox, dialogueText, nameText]);
-        this.currentDialogueBox.setDepth(15);
+        this.currentDialogueBox = this.add.container()
+            .add([dialogueBox, dialogueText, nameText])
+            .setDepth(100);
         
-        // Desvanecer después de un tiempo
         this.time.delayedCall(3000, () => {
             this.tweens.add({
                 targets: this.currentDialogueBox,
                 alpha: 0,
                 duration: 500,
                 onComplete: () => {
-                    if (this.currentDialogueBox) {
-                        this.currentDialogueBox.destroy();
-                        this.currentDialogueBox = null;
-                    }
+                    this.currentDialogueBox.destroy();
+                    this.currentDialogueBox = null;
                 }
             });
         });

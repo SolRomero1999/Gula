@@ -58,5 +58,57 @@ class MessageGenerator {
         ];
         return cringeChatReactions[Math.floor(Math.random() * cringeChatReactions.length)];
     }
+
+    static getBoredMessages() {
+        const emotes = ['FeelsBadMan', 'Sadge', 'Boring', 'DansGame', 'WutFace', 'NotLikeThis'];
+        const emote = emotes[Math.floor(Math.random() * emotes.length)];
+        
+        return [
+            `zzzz... so boring ${emote}`,
+            `When will the eating start? ${emote}`,
+            `I came here to watch mukbang...`,
+            `${emote} This is just sad`,
+            `Where's the food?? ${emote}`,
+            `Bruh... this ain't mukbang`,
+            `*checks watch* ${emote}`,
+            `Did you forget what stream this is?`,
+            `I could be watching paint dry instead`,
+            `This is content? ${emote}`,
+            `*yawns* ${emote}`,
+            `Not what I subscribed for...`,
+            `Where's the content? ${emote}`,
+            `*leaves to watch actual mukbang*`,
+            `This stream fell off ${emote}`,
+            `Did streamer forget to eat?`,
+            `I'm here for FOOD not this`,
+            `*opens another stream* ${emote}`
+        ];
+    }
+
+    static getAngryMukbangMessages() {
+        const emotes = ['Angry', 'PepeHands', 'WutFace', 'DansGame', 'MingLee', 'FailFish'];
+        const emote = emotes[Math.floor(Math.random() * emotes.length)];
+        
+        return [
+            `THIS AIN'T MUKBANG! ${emote}`,
+            `You call this eating?? ${emote}`,
+            `Pathetic portions ${emote}`,
+            `My grandma eats more than this!`,
+            `*unsubs* ${emote}`,
+            `Where's the challenge??`,
+            `This is baby food amounts ${emote}`,
+            `FAKE MUKBANGER ${emote}`,
+            `I want my money back!`,
+            `Scam mukbang ${emote}`,
+            `Not even trying! ${emote}`,
+            `Worst mukbang ever ${emote}`,
+            `You're embarrassing us ${emote}`,
+            `Do you even mukbang bro?`,
+            `This is insulting to mukbang ${emote}`,
+            `*throws virtual tomatoes*`,
+            `0/10 would not watch again`,
+            `Where's the real streamer? ${emote}`
+        ];
+    }
     
 }
