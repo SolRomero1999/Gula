@@ -4,7 +4,8 @@ class SimpleChatSystem {
         this.chatMessages = [];
         this.maxMessages = 15;
         this.chatContainer = null;
-        this.lineHeight = 32; // Aumenté el espaciado entre líneas
+        this.lineHeight = 32;
+        this.panelHeight = 500; // Altura fija del panel de chat
         
         this.scene.events.once('create', () => {
             this.setupChat();
@@ -24,10 +25,10 @@ class SimpleChatSystem {
         this.chatContainer = this.scene.add.container(chatX, chatY);
         
         const chatBackground = this.scene.add.graphics()
-            .fillStyle(0x000000, 0.6)
-            .fillRoundedRect(0, 0, 260, 500, 8)
-            .lineStyle(1, 0x9147ff, 1)
-            .strokeRoundedRect(0, 0, 260, 500, 8);
+            .fillStyle(0x000000, 0.7)
+            .fillRect(0, 0, 260, this.panelHeight)
+            .lineStyle(1, 0x9147ff, 0.5)
+            .strokeRect(0, 0, 260, this.panelHeight);
         
         this.chatContainer.add(chatBackground);
     }
@@ -41,101 +42,147 @@ class SimpleChatSystem {
     addMessage() {
         if (!this.chatContainer) return;
         
-        // Limpiar mensaje más viejo si llegamos al límite
-        if (this.chatMessages.length >= this.maxMessages) {
-            const oldMessage = this.chatMessages.shift();
-            oldMessage.destroy();
-            
-            // Reorganizar todos los mensajes restantes
-            this.repositionMessages();
-        }
+        const messageData = this.generateTwitchStyleMessage();
         
-        // Crear nuevo mensaje
-        const messageText = this.scene.add.text(
-            10, // margen izquierdo
-            490, // posición Y inicial (parte inferior)
-            this.getRandomMessage(),
+        // Crear un contenedor para agrupar el nombre y el mensaje
+        const messageContainer = this.scene.add.container(10, this.panelHeight);
+        this.chatContainer.add(messageContainer);
+        
+        // Texto del nombre de usuario (con color)
+        const usernameText = this.scene.add.text(
+            0,
+            0,
+            `${messageData.username}: `,
             {
                 font: '16px Arial',
-                fill: '#ffffff',
-                wordWrap: { width: 240 }, // Reduje un poco para margen derecho
-                padding: { x: 5, y: 2 }, // Pequeño padding interno
-                lineSpacing: 4 // Espacio entre líneas si el mensaje se divide
+                fill: messageData.color,
+                padding: { x: 5, y: 2 }
             }
-        ).setOrigin(0, 1); // Anclaje inferior izquierdo
+        ).setOrigin(0, 0);
         
-        this.chatContainer.add(messageText);
-        this.chatMessages.push(messageText);
+        // Texto del mensaje (en blanco)
+        const messageText = this.scene.add.text(
+            usernameText.width,
+            0,
+            messageData.message,
+            {
+                font: '16px Arial',
+                fill: '#FFFFFF',
+                wordWrap: { width: 240 - usernameText.width },
+                padding: { x: 5, y: 2 },
+                lineSpacing: 4
+            }
+        ).setOrigin(0, 0);
+        
+        messageContainer.add([usernameText, messageText]);
+        
+        // Calcular altura total del mensaje
+        const totalHeight = Math.max(usernameText.height, messageText.height) + 8;
+        
+        // Añadir el nuevo mensaje
+        this.chatMessages.push({
+            container: messageContainer,
+            height: totalHeight
+        });
         
         // Animación de aparición
-        messageText.setAlpha(0);
+        messageContainer.setAlpha(0);
         this.scene.tweens.add({
-            targets: messageText,
+            targets: messageContainer,
             alpha: 1,
             duration: 300
         });
         
-        // Reorganizar todos los mensajes
+        // Reposicionar y recortar mensajes si es necesario
+        this.organizeMessages();
+    }
+
+    organizeMessages() {
+        let totalHeight = 0;
+        let firstVisibleIndex = 0;
+        
+        // Calcular cuántos mensajes caben (empezando por los más nuevos)
+        for (let i = this.chatMessages.length - 1; i >= 0; i--) {
+            totalHeight += this.chatMessages[i].height;
+            
+            if (totalHeight > this.panelHeight) {
+                firstVisibleIndex = i + 1;
+                break;
+            }
+        }
+        
+        // Eliminar mensajes que ya no caben
+        if (firstVisibleIndex > 0) {
+            for (let i = 0; i < firstVisibleIndex; i++) {
+                this.chatMessages[i].container.destroy();
+            }
+            this.chatMessages = this.chatMessages.slice(firstVisibleIndex);
+        }
+        
+        // Reposicionar todos los mensajes visibles
         this.repositionMessages();
     }
 
     repositionMessages() {
-        // Calcular posición Y para cada mensaje
-        let currentY = 490; // Comenzar desde abajo
+        let currentY = this.panelHeight; // Comenzar desde abajo
         
-        // Recorrer en orden inverso (los más nuevos primero)
+        // Posicionar todos los mensajes de abajo hacia arriba
         for (let i = this.chatMessages.length - 1; i >= 0; i--) {
             const msg = this.chatMessages[i];
             
-            // Calcular altura real del mensaje (considerando múltiples líneas)
-            const msgHeight = Math.max(
-                this.lineHeight, 
-                msg.height + 8 // Margen adicional para mensajes multilínea
-            );
-            
-            // Posicionar el mensaje
             this.scene.tweens.add({
-                targets: msg,
-                y: currentY,
+                targets: msg.container,
+                y: currentY - msg.height,
                 duration: 200,
                 ease: 'Power1'
             });
             
-            // Actualizar posición Y para el siguiente mensaje
-            currentY -= msgHeight;
+            currentY -= msg.height;
         }
     }
 
-    getRandomMessage() {
-        const messages = [
-            "OMG that looks delicious!",
-            "How can you eat so much??",
-            "PogChamp",
-            "KEKW",
-            "That's a big bite!",
-            "MonkaS don't choke!",
-            "Yummy yummy!",
-            "I could never eat that much",
-            "Bruh that's insane",
-            "LUL",
-            "That's some next level eating",
-            "How many calories is that?",
-            "I'm getting full just watching",
-            "That crunch tho!",
-            "No way he finishes that",
-            "Absolute madlad",
-            "This is my dinner show",
-            "I can't look away",
-            "That sauce looks spicy!",
-            "My stomach hurts watching this"
-        ];
-        
+    generateTwitchStyleMessage() {
         const username = [
-            "xXGamer99", "TTV_Eater", "MrFoodie", "DrChomp", 
+            "xXGamer99", "TTV_Eater", "MrFoodie", "DrChomp", "Sawkhe", "RonLimonMon", "Milk_ai",
             "KingNom", "QueenHungry", "ProSnack", "LilMunch",
             "HungryAF", "FoodDestroyer", "SnackKing", "MukbangLover"
         ][Math.floor(Math.random() * 12)];
         
-        return `${username}: ${messages[Math.floor(Math.random() * messages.length)]}`;
+        const usernameColors = [
+            '#FF0000', '#0000FF', '#008000', '#B22222', 
+            '#FF7F50', '#9ACD32', '#FF4500', '#2E8B57',
+            '#DAA520', '#D2691E', '#5F9EA0', '#1E90FF'
+        ];
+        const userColor = usernameColors[Math.floor(Math.random() * usernameColors.length)];
+        
+        const emotes = ['PogChamp', 'KEKW', 'LUL', 'MonkaS', 'Kappa', 'PepeLaugh', 'FeelsBadMan'];
+        const emote = emotes[Math.floor(Math.random() * emotes.length)];
+        
+        const messages = [
+            `OMG that looks delicious! ${emote}`,
+            `How can you eat so much?? ${emote}`,
+            `${emote} ${emote} ${emote}`,
+            `That's a big bite!`,
+            `Don't choke! MonkaS`,
+            `Yummy yummy! ${emote}`,
+            `I could never eat that much`,
+            `Bruh that's insane LUL`,
+            `That's some next level eating`,
+            `How many calories is that?`,
+            `I'm getting full just watching ${emote}`,
+            `That crunch tho!`,
+            `No way he finishes that`,
+            `Absolute madlad ${emote}`,
+            `This is my dinner show`,
+            `I can't look away`,
+            `That sauce looks spicy!`,
+            `My stomach hurts watching this`
+        ];
+        
+        return {
+            username: username,
+            message: messages[Math.floor(Math.random() * messages.length)],
+            color: userColor
+        };
     }
 }
