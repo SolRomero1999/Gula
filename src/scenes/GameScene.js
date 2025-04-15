@@ -1,6 +1,7 @@
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this.chatSystem = null;
     }
 
     init() {
@@ -33,6 +34,8 @@ class GameScene extends Phaser.Scene {
         
         // Temporizadores
         this.setupTimers();
+
+        this.chatSystem = new SimpleChatSystem(this);
     }
 
     cleanup() {
@@ -138,6 +141,7 @@ class GameScene extends Phaser.Scene {
         // Animaciones suaves
         this.animateStomachBar();
         this.animateAudienceChange(audienceGain);
+        this.events.emit('eat');
     }
 
     setupTimers() {
