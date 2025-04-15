@@ -21,7 +21,15 @@ class CuteActionManager {
             const catLine = CuteActionManager.getRandomCatLine();
             const positiveReaction = MessageGenerator.getRandomPositiveReaction();
             
-            gameScene.chatSystem.addSpecialMessage("Gatito", catLine, "#ff69b4");
+            // Mensaje del gato como diálogo del personaje
+            gameScene.addDialogueBox(catLine, "Gatito", {
+                boxColor: 0x000000,
+                borderColor: 0xFFFFFF,
+                textColor: "#FFFFFF",
+                borderThickness: 2
+            });
+            
+            // Mensaje del chat normal
             gameScene.chatSystem.addSpecialMessage("Chat", positiveReaction, "#55ff55");
             
             return {
@@ -33,16 +41,16 @@ class CuteActionManager {
 
     static getRandomCatLine() {
         const catLines = [
-            "¡Mira qué gatito más mono!",
-            "Esto es pura elegancia felina",
-            "¡Miau! ¡Qué adorable!",
-            "Qué gato más majestuoso",
-            "Ronroneos de felicidad",
-            "¡Pawsitivamente encantador!",
-            "Bigotes de ternura",
-            "Zarpas de seda",
-            "¡Este gatito es trending topic!",
-            "Purrfecto para el directo"
+            "Look at this purrfect little furball!",
+            "Such feline elegance!",
+            "Meow! So adorable!",
+            "What a majestic kitty!",
+            "Purrs of pure joy.",
+            "Pawsitively charming!",
+            "Whiskers full of cuteness!",
+            "Silky little paws.",
+            "This kitty is going viral!",
+            "Purrfect moment for the stream!"
         ];
         return catLines[Math.floor(Math.random() * catLines.length)];
     }

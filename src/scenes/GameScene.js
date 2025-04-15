@@ -5,34 +5,29 @@ class GameScene extends Phaser.Scene {
 
     init() {
         this.stomachBar = null;
-        this.viewersText = null;
-        this.goalText = null;
         this.foodItem = null;
         this.cuteButton = null;
         this.stomachCapacity = 100;
         this.displayStomach = 100;
-        this.audienceRating = 100;
-        this.displayAudience = 100;
         this.isGameOver = false;
         this.audienceTimer = null;
         this.stomachRecoveryTimer = null;
-        this.timeElapsed = 0;
-        this.audienceGoal = 1000;
-        this.animatingNumbers = false;
         this.cuteCooldown = false;
         this.cuteCooldownTimer = null;
         this.cuteOveruseCounter = 0;
+        this.currentDialogueBox = null;
     }
 
     create() {
         this.cleanup();
         this.createStomachBar();
-        this.createViewersCounter();
-        this.createGoalDisplay();
         this.createFood();
         this.createCuteButton();
         this.setupTimers();
         this.chatSystem = new SimpleChatSystem(this);
+        
+        // Inicializar AudienceManager
+        this.audienceManager = new AudienceManager(this);
     }
 
     cleanup() {
@@ -40,10 +35,10 @@ class GameScene extends Phaser.Scene {
         if (this.stomachRecoveryTimer) this.stomachRecoveryTimer.destroy();
         if (this.foodItem) this.foodItem.destroy();
         if (this.stomachBar) this.stomachBar.destroy();
-        if (this.viewersText) this.viewersText.destroy();
-        if (this.goalText) this.goalText.destroy();
         if (this.cuteButton) this.cuteButton.destroy();
         if (this.cuteCooldownTimer) this.cuteCooldownTimer.destroy();
+        if (this.audienceManager) this.audienceManager.cleanup();
+        if (this.currentDialogueBox) this.currentDialogueBox.destroy();
         
         this.time.removeAllEvents();
         this.tweens.killAll();
@@ -68,38 +63,6 @@ class GameScene extends Phaser.Scene {
                 barWidth, 
                 barHeight * (this.displayStomach / 100)
             );
-    }
-
-    createViewersCounter() {
-        this.viewersText = this.add.text(
-            this.cameras.main.width - 20,
-            20,
-            `${this.audienceRating} viewers`,
-            {
-                font: '24px Arial',
-                fill: '#ffffff',
-                backgroundColor: '#000000',
-                padding: { x: 15, y: 5 }
-            }
-        )
-        .setOrigin(1, 0)
-        .setDepth(10);
-    }
-
-    createGoalDisplay() {
-        this.goalText = this.add.text(
-            this.cameras.main.centerX,
-            20,
-            `Meta: ${this.audienceRating}/${this.audienceGoal}`,
-            {
-                font: '24px Arial',
-                fill: '#ffffff',
-                backgroundColor: '#9147ff',
-                padding: { x: 15, y: 5 }
-            }
-        )
-        .setOrigin(0.5, 0)
-        .setDepth(10);
     }
 
     createFood() {
@@ -163,7 +126,11 @@ class GameScene extends Phaser.Scene {
     handleFoodClick() {
         this.stomachCapacity = Phaser.Math.Clamp(this.stomachCapacity - 10, 0, 100);
         const audienceGain = Math.floor(50 + Math.random() * 50);
-        this.audienceRating += audienceGain;
+        
+        const gameOver = this.audienceManager.changeRating(audienceGain);
+        if (gameOver) {
+            this.triggerGameOver('audience');
+        }
 
         this.tweens.add({
             targets: this.foodItem,
@@ -173,7 +140,6 @@ class GameScene extends Phaser.Scene {
         });
 
         this.animateStomachBar();
-        this.animateAudienceChange(audienceGain);
         this.events.emit('eat');
     }
 
@@ -188,8 +154,15 @@ class GameScene extends Phaser.Scene {
         
         const result = CuteActionManager.executeCuteAction(this);
         
+        const gameOver = this.audienceManager.changeRating(
+            result.isOverusing ? -result.audienceChange : result.audienceChange
+        );
+        
+        if (gameOver) {
+            this.triggerGameOver('audience');
+        }
+        
         if (result.isOverusing) {
-            this.animateAudienceChange(-result.audienceChange);
             this.cameras.main.shake(200, 0.01);
             this.tweens.add({
                 targets: this.cuteButton,
@@ -198,7 +171,6 @@ class GameScene extends Phaser.Scene {
                 yoyo: true
             });
         } else {
-            this.animateAudienceChange(result.audienceChange);
             this.cameras.main.flash(200, 255, 192, 203);
             this.tweens.add({
                 targets: this.cuteButton,
@@ -218,19 +190,24 @@ class GameScene extends Phaser.Scene {
     }
 
     setupTimers() {
+        // Timer para pérdida gradual de audiencia
         this.audienceTimer = this.time.addEvent({
             delay: 5000,
             callback: () => {
                 if (!this.isGameOver) {
-                    const lostAudience = Math.max(1, Math.floor(this.audienceRating * 0.05));
-                    this.audienceRating = Math.max(0, this.audienceRating - lostAudience);
-                    this.animateAudienceChange(-lostAudience);
+                    const lostAudience = Math.max(1, Math.floor(this.audienceManager.rating * 0.05));
+                    const gameOver = this.audienceManager.changeRating(-lostAudience);
+                    
+                    if (gameOver) {
+                        this.triggerGameOver('audience');
+                    }
                 }
             },
             callbackScope: this,
             loop: true
         });
         
+        // Timer para recuperación gradual del estómago
         this.stomachRecoveryTimer = this.time.addEvent({
             delay: 1000,
             callback: () => {
@@ -256,45 +233,6 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    animateAudienceChange(change) {
-        if (this.animatingNumbers) return;
-        this.animatingNumbers = true;
-        
-        const startValue = this.displayAudience;
-        const endValue = this.audienceRating;
-        const duration = Math.min(800, Math.abs(change) * 15); 
-        
-        this.tweens.add({
-            targets: this,
-            displayAudience: endValue,
-            duration: duration,
-            ease: 'Power1',
-            onUpdate: () => {
-                this.viewersText.setText(`${Math.floor(this.displayAudience)} viewers`);
-                
-                if (this.displayAudience < startValue) {
-                    this.viewersText.setColor('#ff5555'); 
-                } else {
-                    this.viewersText.setColor('#55ff55'); 
-                }
-                
-                this.updateGoalDisplay();
-                
-                if (this.displayAudience >= this.audienceGoal) {
-                    this.updateAudienceGoal();
-                }
-            },
-            onComplete: () => {
-                this.viewersText.setColor('#ffffff'); 
-                this.animatingNumbers = false;
-
-                if (this.audienceRating <= 0) {
-                    this.triggerGameOver('audience');
-                }
-            }
-        });
-    }
-
     updateStomachBar() {
         const barWidth = 30;
         const barHeight = 400;
@@ -315,57 +253,111 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    updateGoalDisplay() {
-        this.goalText.setText(`Meta: ${Math.floor(this.displayAudience)}/${this.audienceGoal}`);
-    }
-
-    updateAudienceGoal() {
-        const goals = [1000, 2500, 5000, 10000];
-        for (let goal of goals) {
-            if (this.audienceRating < goal) {
-                this.audienceGoal = goal;
-                break;
-            }
-        }
-        
-        this.showGoalReachedEffect();
-    }
-
-    showGoalReachedEffect() {
-        this.cameras.main.flash(300, 145, 71, 255);
-
-        const congratsText = this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 100,
-            `¡Meta alcanzada!\nNueva meta: ${this.audienceGoal}`,
-            {
-                font: '32px Arial',
-                fill: '#ffffff',
-                backgroundColor: '#9147ff',
-                align: 'center',
-                padding: { x: 20, y: 10 }
-            }
-        )
-        .setOrigin(0.5)
-        .setDepth(20);
-        
-        this.tweens.add({
-            targets: congratsText,
-            alpha: 0,
-            duration: 1000,
-            delay: 1000,
-            onComplete: () => congratsText.destroy()
-        });
-    }
-
     triggerGameOver(loseType) {
         this.isGameOver = true;
         this.cleanup();
         
         this.scene.start('GameOverScene', { 
             loseType: loseType,
-            audienceRating: this.audienceRating,
-            audienceGoal: this.audienceGoal
+            audienceRating: this.audienceManager.rating,
+            audienceGoal: this.audienceManager.goal
+        });
+    }
+    
+    addDialogueBox(text, character, styleOptions = {}) {
+        // Configuración por defecto
+        const defaultStyle = {
+            boxColor: 0x000000,
+            borderColor: 0xFFFFFF,
+            textColor: '#FFFFFF',
+            borderThickness: 2,
+            padding: 15,
+            maxWidth: 300,
+            boxYPosition: 150
+        };
+        
+        // Combinar con opciones personalizadas
+        const style = { ...defaultStyle, ...styleOptions };
+        
+        // Destruir el diálogo anterior si existe
+        if (this.currentDialogueBox) {
+            this.currentDialogueBox.destroy();
+        }
+        
+        // Crear el fondo del diálogo
+        const dialogueBox = this.add.graphics();
+        
+        // Estilo del texto
+        const textStyle = {
+            font: '20px Arial',
+            fill: style.textColor,
+            wordWrap: { width: style.maxWidth - 2 * style.padding }
+        };
+        
+        // Crear el texto del diálogo
+        const dialogueText = this.add.text(
+            this.cameras.main.centerX,
+            style.boxYPosition,
+            text,
+            textStyle
+        ).setOrigin(0.5, 0);
+        
+        // Calcular dimensiones del cuadro
+        const textBounds = dialogueText.getBounds();
+        const boxWidth = textBounds.width + 2 * style.padding;
+        const boxHeight = textBounds.height + 2 * style.padding;
+        
+        // Dibujar el cuadro de diálogo
+        dialogueBox.fillStyle(style.boxColor, 0.8);
+        dialogueBox.fillRoundedRect(
+            this.cameras.main.centerX - boxWidth/2,
+            style.boxYPosition - style.padding,
+            boxWidth,
+            boxHeight,
+            10
+        );
+        
+        dialogueBox.lineStyle(style.borderThickness, style.borderColor);
+        dialogueBox.strokeRoundedRect(
+            this.cameras.main.centerX - boxWidth/2,
+            style.boxYPosition - style.padding,
+            boxWidth,
+            boxHeight,
+            10
+        );
+        
+        // Nombre del personaje (centrado sobre el cuadro)
+        const nameText = this.add.text(
+            this.cameras.main.centerX,
+            style.boxYPosition - style.padding - 20,
+            character,
+            {
+                font: '16px Arial',
+                fill: style.textColor,
+                backgroundColor: style.boxColor,
+                padding: { x: 10, y: 5 },
+                align: 'center'
+            }
+        ).setOrigin(0.5, 0.5);
+        
+        // Grupo para manejar todos los elementos
+        this.currentDialogueBox = this.add.container();
+        this.currentDialogueBox.add([dialogueBox, dialogueText, nameText]);
+        this.currentDialogueBox.setDepth(15);
+        
+        // Desvanecer después de un tiempo
+        this.time.delayedCall(3000, () => {
+            this.tweens.add({
+                targets: this.currentDialogueBox,
+                alpha: 0,
+                duration: 500,
+                onComplete: () => {
+                    if (this.currentDialogueBox) {
+                        this.currentDialogueBox.destroy();
+                        this.currentDialogueBox = null;
+                    }
+                }
+            });
         });
     }
 
