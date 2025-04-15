@@ -4,14 +4,8 @@ class GameScene extends Phaser.Scene {
     }
 
     init() {
-        this.stomachBar = null;
-        this.foodItem = null;
-        this.cuteButton = null;
-        this.stomachCapacity = 100;
-        this.displayStomach = 100;
         this.isGameOver = false;
         this.audienceTimer = null;
-        this.stomachRecoveryTimer = null;
         this.cuteCooldown = false;
         this.cuteCooldownTimer = null;
         this.cuteOveruseCounter = 0;
@@ -20,10 +14,17 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.cleanup();
-        this.createStomachBar();
-        this.createFood();
+        
+        // Inicializar MokbanManager (maneja toda la lógica de comer)
+        this.mokbanManager = new MokbanManager(this);
+        
+        // Crear botón de acto tierno
         this.createCuteButton();
-        this.setupTimers();
+        
+        // Configurar temporizador de audiencia
+        this.setupAudienceTimer();
+        
+        // Inicializar sistema de chat
         this.chatSystem = new SimpleChatSystem(this);
         
         // Inicializar AudienceManager
@@ -31,53 +32,18 @@ class GameScene extends Phaser.Scene {
     }
 
     cleanup() {
+        // Limpiar todos los componentes
         if (this.audienceTimer) this.audienceTimer.destroy();
-        if (this.stomachRecoveryTimer) this.stomachRecoveryTimer.destroy();
-        if (this.foodItem) this.foodItem.destroy();
-        if (this.stomachBar) this.stomachBar.destroy();
         if (this.cuteButton) this.cuteButton.destroy();
         if (this.cuteCooldownTimer) this.cuteCooldownTimer.destroy();
         if (this.audienceManager) this.audienceManager.cleanup();
+        if (this.mokbanManager) this.mokbanManager.cleanup();
         if (this.currentDialogueBox) this.currentDialogueBox.destroy();
         
+        // Limpiar eventos y tweens
         this.time.removeAllEvents();
         this.tweens.killAll();
         this.children.removeAll();
-    }
-
-    createStomachBar() {
-        const barWidth = 30;
-        const barHeight = 400;
-        const margin = 50;
-        const startY = this.cameras.main.height - margin - barHeight;
- 
-        this.add.graphics()
-            .fillStyle(0x333333, 1)
-            .fillRect(margin, startY, barWidth, barHeight);
-        
-        this.stomachBar = this.add.graphics()
-            .fillStyle(0x00ff00, 1)
-            .fillRect(
-                margin, 
-                startY + barHeight * (1 - this.displayStomach / 100), 
-                barWidth, 
-                barHeight * (this.displayStomach / 100)
-            );
-    }
-
-    createFood() {
-        this.foodItem = this.add.circle(
-            this.cameras.main.centerX, 
-            this.cameras.main.centerY, 
-            50, 
-            0xff0000
-        ).setInteractive();
-        
-        this.foodItem.on('pointerdown', () => {
-            if (!this.isGameOver) {
-                this.handleFoodClick();
-            }
-        });
     }
 
     createCuteButton() {
@@ -104,6 +70,7 @@ class GameScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(6);
         
+        // Efectos hover del botón
         this.cuteButton.on('pointerover', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
                 this.cuteButton.setFillStyle(0xff1493); 
@@ -116,6 +83,7 @@ class GameScene extends Phaser.Scene {
             }
         });
         
+        // Acción al hacer click
         this.cuteButton.on('pointerdown', () => {
             if (!this.cuteCooldown && !this.isGameOver) {
                 this.handleCuteAction();
@@ -123,45 +91,32 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    handleFoodClick() {
-        this.stomachCapacity = Phaser.Math.Clamp(this.stomachCapacity - 10, 0, 100);
-        const audienceGain = Math.floor(50 + Math.random() * 50);
-        
-        const gameOver = this.audienceManager.changeRating(audienceGain);
-        if (gameOver) {
-            this.triggerGameOver('audience');
-        }
-
-        this.tweens.add({
-            targets: this.foodItem,
-            scale: 0.8,
-            duration: 100,
-            yoyo: true
-        });
-
-        this.animateStomachBar();
-        this.events.emit('eat');
-    }
-
     handleCuteAction() {
+        // Activar cooldown
         this.cuteCooldown = true;
         this.cuteButton.setFillStyle(0x888888); 
+        
+        // Temporizador para resetear cooldown
         this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
             this.cuteCooldown = false;
             this.cuteButton.setFillStyle(0xff69b4); 
             this.cuteCooldownTimer = null;
         });
         
+        // Ejecutar acción tierna
         const result = CuteActionManager.executeCuteAction(this);
         
+        // Aplicar efecto en la audiencia
         const gameOver = this.audienceManager.changeRating(
             result.isOverusing ? -result.audienceChange : result.audienceChange
         );
         
         if (gameOver) {
             this.triggerGameOver('audience');
+            return;
         }
         
+        // Efectos visuales según el resultado
         if (result.isOverusing) {
             this.cameras.main.shake(200, 0.01);
             this.tweens.add({
@@ -180,6 +135,7 @@ class GameScene extends Phaser.Scene {
             });
         }
         
+        // Animación del botón
         this.tweens.add({
             targets: this.cuteButton,
             scaleX: 0.9,
@@ -189,7 +145,7 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    setupTimers() {
+    setupAudienceTimer() {
         // Timer para pérdida gradual de audiencia
         this.audienceTimer = this.time.addEvent({
             delay: 5000,
@@ -206,51 +162,6 @@ class GameScene extends Phaser.Scene {
             callbackScope: this,
             loop: true
         });
-        
-        // Timer para recuperación gradual del estómago
-        this.stomachRecoveryTimer = this.time.addEvent({
-            delay: 1000,
-            callback: () => {
-                if (!this.isGameOver && this.stomachCapacity < 100) {
-                    this.stomachCapacity = Phaser.Math.Clamp(this.stomachCapacity + 3, 0, 100);
-                    this.animateStomachBar();
-                }
-            },
-            callbackScope: this,
-            loop: true
-        });
-    }
-
-    animateStomachBar() {
-        this.tweens.add({
-            targets: this,
-            displayStomach: this.stomachCapacity,
-            duration: 300,
-            ease: 'Power1',
-            onUpdate: () => {
-                this.updateStomachBar();
-            }
-        });
-    }
-
-    updateStomachBar() {
-        const barWidth = 30;
-        const barHeight = 400;
-        const margin = 50;
-        const startY = this.cameras.main.height - margin - barHeight;
-        
-        this.stomachBar.clear()
-            .fillStyle(0x00ff00, 1)
-            .fillRect(
-                margin, 
-                startY + barHeight * (1 - this.displayStomach / 100), 
-                barWidth, 
-                barHeight * (this.displayStomach / 100)
-            );
-
-        if (this.stomachCapacity <= 0 && !this.isGameOver) {
-            this.triggerGameOver('stomach');
-        }
     }
 
     triggerGameOver(loseType) {

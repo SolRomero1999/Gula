@@ -1,40 +1,53 @@
 class CuteActionManager {
     static executeCuteAction(gameScene) {
-        const isOverusing = gameScene.cuteOveruseCounter >= 3 && Math.random() < 0.5;
-        
-        if (isOverusing) {
-            const audienceLoss = Math.floor(30 + Math.random() * 70);
+        const isCringe = Math.random() < 0.4; 
+        if (isCringe) {
+            // 1. Pérdida de audiencia
+            const audienceLoss = 30 + Math.floor(Math.random() * 70);
             gameScene.audienceRating = Math.max(0, gameScene.audienceRating - audienceLoss);
+
+            // 2. Mensaje de chat cringe (con usuario y color aleatorio)
+            const username = UserGenerator.generateUsername(); 
+            const userColor = UserGenerator.generateUserColor(); 
             const cringeMessage = MessageGenerator.getRandomCringeReaction();
-            gameScene.chatSystem.addSpecialMessage("Chat", cringeMessage, "#ff5555");
-            gameScene.cuteOveruseCounter = 0;
-            
+            gameScene.chatSystem.addSpecialMessage(username, cringeMessage, userColor); 
+
+            // 3. Efecto de sacudida de pantalla
+            if (gameScene.cameras && gameScene.cameras.main) {
+                gameScene.cameras.main.shake(300, 0.02);
+            }
+
             return {
-                isOverusing: true,
-                audienceChange: -audienceLoss
+                isCringe: true,
+                audienceChange: -audienceLoss,
+                message: cringeMessage
             };
+
         } else {
-            const audienceGain = Math.floor(80 + Math.random() * 120);
+            // Caso exitoso
+            const audienceGain = 80 + Math.floor(Math.random() * 120);
             gameScene.audienceRating += audienceGain;
-            gameScene.cuteOveruseCounter++;
             
             const catLine = CuteActionManager.getRandomCatLine();
-            const positiveReaction = MessageGenerator.getRandomPositiveReaction();
             
-            // Mensaje del gato como diálogo del personaje
-            gameScene.addDialogueBox(catLine, "Gatito", {
+            // Mensaje positivo del chat 
+            const username = UserGenerator.generateUsername(); 
+            const userColor = UserGenerator.generateUserColor(); 
+            const positiveReaction = MessageGenerator.getRandomPositiveReaction();
+            gameScene.chatSystem.addSpecialMessage(username, positiveReaction, userColor); 
+            
+            // Diálogo del gato
+            gameScene.addDialogueBox(catLine, "Kitty", {
                 boxColor: 0x000000,
                 borderColor: 0xFFFFFF,
                 textColor: "#FFFFFF",
                 borderThickness: 2
             });
             
-            // Mensaje del chat normal
-            gameScene.chatSystem.addSpecialMessage("Chat", positiveReaction, "#55ff55");
-            
             return {
-                isOverusing: false,
-                audienceChange: audienceGain
+                isCringe: false,
+                audienceChange: audienceGain,
+                message: catLine
             };
         }
     }
