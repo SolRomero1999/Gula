@@ -4,269 +4,139 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', '../assets/background.png');
-        this.load.image('planta', '../assets/planta.png');
-        this.load.image('luces', '../assets/luces.png');
-        this.load.image('desk', '../assets/desk.png'); 
-        this.load.image('ramen_bowl1', '../assets/ramen_bowl1.png');
-        this.load.image('ramen_bowl2', '../assets/ramen_bowl2.png');
-        this.load.image('ramen_bowl3', '../assets/ramen_bowl3.png');
-        this.load.image('ramen_bowl4', '../assets/ramen_bowl4.png');
-        this.load.image('ramen_bowl5', '../assets/ramen_bowl5.png');
-        this.load.image('palillos', '../assets/palillos.png');
-        this.load.image('PortaPalillos', '../assets/PortaPalillos.png');
-        this.load.image('streamer', '../assets/streamer.png');
-        this.load.image('ojosc1', '../assets/OjosC1.png');
-        this.load.image('pupilasc1', '../assets/pupilasC1.png');
+        const assets = [
+            'background', 'planta', 'luces', 'desk',
+            'ramen_bowl1', 'ramen_bowl2', 'ramen_bowl3','ramen_bowl4', 'ramen_bowl5', 
+            'palillos','PortaPalillos', 
+            'streamer', 'ojosc1', 'pupilasc1'
+        ];
+    
+        assets.forEach(asset => {
+            this.load.image(asset, `../assets/${asset}.png`);
+        });
     }
-
+    
     init() {
         this.isGameOver = false;
-        this.audienceTimer = null;
-        this.cuteCooldown = false;
-        this.cuteCooldownTimer = null;
-        this.cuteOveruseCounter = 0;
         this.currentDialogueBox = null;
     }
 
     create() {
         this.cleanup();
-        this.audienceManager = new AudienceManager(this);
+        
+        // Inicializar managers
         this.moneyManager = new MoneyManager(this);
-        this.subscriptionManager = new SubscriptionManager(this, this.audienceManager, this.moneyManager);
-
-        
-        // 0: Fondo
-        this.background = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'background'
-        ).setOrigin(0.5, 0.5)
-         .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-         .setDepth(0);
-        // 1: Luces
-        this.luces = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'luces'
-        ).setOrigin(0.5, 0.5)
-         .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-         .setDepth(1);
-        // 1: Planta
-        this.planta = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'planta'
-        ).setOrigin(0.5, 0.5)
-         .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-         .setDepth(1);
-        // 5: Gato
-        this.cat = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'streamer'
-        ).setOrigin(0.5, 0.5)
-         .setScale(0.7)
-         .setDepth(5);
-         this.ojos = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'ojosc1'
-        ).setOrigin(0.5, 0.5)
-         .setScale(0.7)
-         .setDepth(6);
-         this.pupilas = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'pupilasc1'
-        ).setOrigin(0.5, 0.5)
-         .setScale(0.7)
-         .setDepth(7);
-        // 10: Mesa
-        this.desk = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            'desk'
-        ).setOrigin(0.5, 0.5)
-         .setScale(0.8)
-         .setDepth(10);
-        // 11: PortaPalillos
-        this.PortaPalillos = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 100,
-            'PortaPalillos'
-        ).setOrigin(0.5, 0.5)
-         .setScale(0.8)
-         .setDepth(11);
-        // 12: Palillos
-        this.palillos = this.add.image(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 100,
-            'palillos'
-        ).setOrigin(0.5, 0.5)
-         .setScale(0.8)
-         .setDepth(12);
-        // 15: Tazón (manejado por MokbanManager)
-        this.mokbanManager = new MokbanManager(this);
-        
-        // 20: Barra hambre (manejado por MokbanManager)
-        
-        // 50: Chat
-        this.chatSystem = new SimpleChatSystem(this);
-        
-        // 60: Botón acto tierno
-        this.createCuteButton();
-        
-        // Sistemas adicionales
-        this.setupAudienceTimer();
         this.audienceManager = new AudienceManager(this);
+        this.subscriptionManager = new SubscriptionManager(this, this.audienceManager, this.moneyManager);
+        this.mokbanManager = new MokbanManager(this);
+        this.chatSystem = new SimpleChatSystem(this);
+        this.cuteActionManager = new CuteActionManager(this, this.audienceManager, this.chatSystem);
+        this.foodPurchaseManager = new FoodPurchaseManager(this, this.moneyManager, this.mokbanManager);
+    
+        // Configurar elementos visuales
+        this.setupVisualElements();
         
-        // Animación gato
+        // Animación del streamer
+        this.setupStreamerAnimation();
+    }
+
+    setupVisualElements() {
+        const centerX = this.cameras.main.centerX;
+        const centerY = this.cameras.main.centerY;
+        const fullSize = { width: this.cameras.main.width, height: this.cameras.main.height };
+    
+        const images = [
+            { key: 'background', depth: 0, size: fullSize },
+            { key: 'luces', depth: 1, size: fullSize },
+            { key: 'planta', depth: 1, size: fullSize },
+            { key: 'streamer', depth: 5, scale: 0.7 },
+            { key: 'ojosc1', depth: 6, scale: 0.7 },
+            { key: 'pupilasc1', depth: 7, scale: 0.7 },
+            { key: 'desk', depth: 10, scale: 0.8 },
+            { key: 'PortaPalillos', depth: 11, yOffset: -100, scale: 0.8 },
+            { key: 'palillos', depth: 12, yOffset: -100, scale: 0.8 }
+        ];
+    
+        images.forEach(config => {
+            const image = this.add.image(
+                centerX,
+                centerY + (config.yOffset || 0),
+                config.key
+            ).setOrigin(0.5, 0.5)
+             .setDepth(config.depth);
+    
+            if (config.size) {
+                image.setDisplaySize(config.size.width, config.size.height);
+            }
+            if (config.scale) {
+                image.setScale(config.scale);
+            }
+    
+            this[config.key] = image;  
+        });
+    }
+
+    setupStreamerAnimation() {
         this.tweens.add({
-            targets: this.cat,
-            y: this.cat.y + 3,
+            targets: this.streamer,  
+            y: this.streamer.y + 3,
             duration: 2000,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
-        
     }
 
     cleanup() {
-        if (this.audienceTimer) this.audienceTimer.destroy();
-        if (this.cuteButton) this.cuteButton.destroy();
-        if (this.cuteCooldownTimer) this.cuteCooldownTimer.destroy();
-        if (this.audienceManager) this.audienceManager.cleanup();
-        if (this.mokbanManager) this.mokbanManager.cleanup();
-        if (this.currentDialogueBox) this.currentDialogueBox.destroy();
-        if (this.desk) this.desk.destroy();
-        if (this.cat) this.cat.destroy();
-        if (this.deskShadow) this.deskShadow.destroy();
-        
+        // Primero limpiar elementos generales que podrían afectar a los managers
         this.time.removeAllEvents();
         this.tweens.killAll();
+        
+        // Limpiar managers en orden inverso al de creación
+        this.foodPurchaseManager?.cleanup();
+        this.cuteActionManager?.cleanup();
+        this.chatSystem?.cleanup();
+        this.mokbanManager?.cleanup();
+        this.subscriptionManager?.cleanup();
+        this.audienceManager?.cleanup();
+        this.moneyManager?.cleanup();
+        
+        // Finalmente limpiar todos los hijos de la escena
         this.children.removeAll();
-        if (this.subscriptionManager) this.subscriptionManager.cleanup();
-    }
-
-    createCuteButton() {
-        this.cuteButton = this.add.rectangle(
-            this.cameras.main.centerX,  // Centrado en X
-            this.cameras.main.height - 60,  // Misma posición en Y
-            200,
-            50,
-            0xff69b4 
-        )
-        .setInteractive()
-        .setDepth(60);
-        const buttonText = this.add.text(
-            this.cameras.main.centerX,  // Centrado en X
-            this.cameras.main.height - 60,
-            'Acto Tierno',
-            {
-                font: '20px Arial',
-                fill: '#ffffff',
-                fontWeight: 'bold'
-            }
-        ).setOrigin(0.5)
-         .setDepth(61);
-        
-        this.cuteButton.on('pointerover', () => {
-            if (!this.cuteCooldown && !this.isGameOver) {
-                this.cuteButton.setFillStyle(0xff1493);
-            }
-        });
-        
-        this.cuteButton.on('pointerout', () => {
-            if (!this.cuteCooldown && !this.isGameOver) {
-                this.cuteButton.setFillStyle(0xff69b4);
-            }
-        });
-        
-        this.cuteButton.on('pointerdown', () => {
-            if (!this.cuteCooldown && !this.isGameOver) {
-                this.handleCuteAction();
-            }
-        });
-    }
-
-    handleCuteAction() {
-        this.cuteCooldown = true;
-        this.cuteButton.setFillStyle(0x888888);
-        
-        this.cuteCooldownTimer = this.time.delayedCall(5000, () => {
-            this.cuteCooldown = false;
-            this.cuteButton.setFillStyle(0xff69b4);
-            this.cuteCooldownTimer = null;
-        });
-        
-        const result = CuteActionManager.executeCuteAction(this);
-        const gameOver = this.audienceManager.changeRating(
-            result.isOverusing ? -result.audienceChange : result.audienceChange
-        );
-        
-        if (gameOver) {
-            this.triggerGameOver('audience');
-            return;
-        }
-        
-        if (result.isOverusing) {
-            this.cameras.main.shake(200, 0.01);
-            this.tweens.add({
-                targets: this.cuteButton,
-                tint: 0xff0000,
-                duration: 300,
-                yoyo: true
-            });
-        } else {
-            this.cameras.main.flash(200, 255, 192, 203);
-            this.tweens.add({
-                targets: this.cuteButton,
-                tint: 0xffffff,
-                duration: 300,
-                yoyo: true
-            });
-        }
-        
-        this.tweens.add({
-            targets: this.cuteButton,
-            scaleX: 0.9,
-            scaleY: 0.9,
-            duration: 100,
-            yoyo: true
-        });
-    }
-
-    setupAudienceTimer() {
-        this.audienceTimer = this.time.addEvent({
-            delay: 5000,
-            callback: () => {
-                if (!this.isGameOver) {
-                    const lostAudience = Math.max(1, Math.floor(this.audienceManager.rating * 0.05));
-                    const gameOver = this.audienceManager.changeRating(-lostAudience);
-                    if (gameOver) this.triggerGameOver('audience');
-                }
-            },
-            loop: true
-        });
     }
 
     triggerGameOver(loseType) {
+        if (this.isGameOver) return; // Evitar múltiples llamadas
+        
         this.isGameOver = true;
+        
+        // Desactivar interactividad primero
+        this.input.enabled = false;
+        
+        // Limpiar
         this.cleanup();
+        
+        // Cambiar de escena
         this.scene.start('GameOverScene', {
             loseType: loseType,
-            audienceRating: this.audienceManager.rating,
-            audienceGoal: this.audienceManager.goal
+            audienceRating: this.audienceManager?.rating || 0,
+            audienceGoal: this.audienceManager?.goal || 0
         });
     }
     
     addDialogueBox(text, character, styleOptions = {}) {
-        if (this.currentDialogueBox) {
-            this.currentDialogueBox.destroy();
+        // Validación EXTRA robusta
+        if (!text || typeof text !== 'string' || !text.trim()) {
+            console.warn("Texto de diálogo inválido:", text);
+            return null; // Retorna null para manejar casos de error
         }
-        
+    
+        // Destruye el diálogo anterior de manera SEGURA
+        if (this.currentDialogueBox) {
+            this.currentDialogueBox.destroy(true);
+            this.currentDialogueBox = null;
+        }
+    
         const style = {
             boxColor: 0x000000,
             borderColor: 0xFFFFFF,
@@ -277,26 +147,31 @@ class GameScene extends Phaser.Scene {
             boxYPosition: 150,
             ...styleOptions
         };
-        
+    
+        // Crea el texto PRIMERO (sin wordWrap inicial)
         const dialogueText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition,
             text,
             {
                 font: '20px Arial',
-                fill: style.textColor,
-                wordWrap: { width: style.maxWidth - 2 * style.padding }
+                fill: style.textColor
             }
         ).setOrigin(0.5, 0);
-        
+    
+        // Aplica wordWrap DESPUÉS de crear el texto
+        dialogueText.setWordWrapWidth(style.maxWidth - 2 * style.padding);
+    
+        // Calcula dimensiones
         const textBounds = dialogueText.getBounds();
-        const boxWidth = textBounds.width + 2 * style.padding;
+        const boxWidth = Math.max(100, textBounds.width + 2 * style.padding); // Ancho mínimo de 100
         const boxHeight = textBounds.height + 2 * style.padding;
-        
+    
+        // Caja de fondo
         const dialogueBox = this.add.graphics()
             .fillStyle(style.boxColor, 0.8)
             .fillRoundedRect(
-                this.cameras.main.centerX - boxWidth/2,
+                this.cameras.main.centerX - boxWidth / 2,
                 style.boxYPosition - style.padding,
                 boxWidth,
                 boxHeight,
@@ -304,13 +179,14 @@ class GameScene extends Phaser.Scene {
             )
             .lineStyle(style.borderThickness, style.borderColor)
             .strokeRoundedRect(
-                this.cameras.main.centerX - boxWidth/2,
+                this.cameras.main.centerX - boxWidth / 2,
                 style.boxYPosition - style.padding,
                 boxWidth,
                 boxHeight,
                 10
             );
-        
+    
+        // Texto del nombre
         const nameText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition - style.padding - 20,
@@ -322,22 +198,28 @@ class GameScene extends Phaser.Scene {
                 padding: { x: 10, y: 5 }
             }
         ).setOrigin(0.5, 0.5);
-        
+    
+        // Contenedor
         this.currentDialogueBox = this.add.container()
             .add([dialogueBox, dialogueText, nameText])
             .setDepth(100);
-        
+    
+        // Auto-eliminación después de 3 segundos
         this.time.delayedCall(3000, () => {
-            this.tweens.add({
-                targets: this.currentDialogueBox,
-                alpha: 0,
-                duration: 500,
-                onComplete: () => {
-                    this.currentDialogueBox.destroy();
-                    this.currentDialogueBox = null;
-                }
-            });
+            if (this.currentDialogueBox) {
+                this.tweens.add({
+                    targets: this.currentDialogueBox,
+                    alpha: 0,
+                    duration: 500,
+                    onComplete: () => {
+                        this.currentDialogueBox.destroy(true);
+                        this.currentDialogueBox = null;
+                    }
+                });
+            }
         });
+    
+        return this.currentDialogueBox; // Para referencia externa
     }
 
     shutdown() {

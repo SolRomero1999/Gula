@@ -1,89 +1,72 @@
 class AudienceManager {
     constructor(scene, initialRating = 100, initialGoal = 1000) {
         this.scene = scene;
-        this.rating = initialRating;
-        this.displayRating = initialRating;
+        this.rating = this.displayRating = initialRating;
         this.goal = initialGoal;
         this.goals = [1000, 2500, 5000, 10000];
         this.animating = false;
-        
-        // Crear elementos visuales
-        this.createViewersCounter();
-        this.createGoalDisplay();
+        this.init();
     }
 
-    createViewersCounter() {
-        this.viewersText = this.scene.add.text(
-            this.scene.cameras.main.width - 20,
-            20,
-            `${this.rating} viewers`,
-            {
-                font: '24px Arial',
-                fill: '#ffffff',
-                backgroundColor: '#000000',
-                padding: { x: 15, y: 5 }
-            }
-        )
-        .setOrigin(1, 0)
+    init() {
+        this.viewersText = this.createText(this.scene.cameras.main.width - 20, 20, `${this.rating} viewers`, '#000000');
+        this.goalText = this.createText(this.scene.cameras.main.centerX, 20, `Meta: ${this.rating}/${this.goal}`, '#9147ff', 0.5);
+        this.setupAudienceTimer();
+    }
+
+    createText(x, y, text, bgColor, originX = 1) {
+        return this.scene.add.text(x, y, text, {
+            font: '24px Arial',
+            fill: '#ffffff',
+            backgroundColor: bgColor,
+            padding: { x: 15, y: 5 }
+        })
+        .setOrigin(originX, 0)
         .setDepth(10);
     }
 
-    createGoalDisplay() {
-        this.goalText = this.scene.add.text(
-            this.scene.cameras.main.centerX,
-            20,
-            `Meta: ${this.rating}/${this.goal}`,
-            {
-                font: '24px Arial',
-                fill: '#ffffff',
-                backgroundColor: '#9147ff',
-                padding: { x: 15, y: 5 }
+    setupAudienceTimer() {
+        this.audienceTimer = this.scene.time.addEvent({
+            delay: 5000,
+            loop: true,
+            callback: () => {
+                if (!this.scene.isGameOver) {
+                    const lostAudience = Math.max(1, Math.floor(this.rating * 0.05));
+                    if (this.changeRating(-lostAudience)) this.scene.triggerGameOver('audience');
+                }
             }
-        )
-        .setOrigin(0.5, 0)
-        .setDepth(10);
+        });
     }
 
     changeRating(amount) {
         const oldRating = this.rating;
         this.rating = Math.max(0, this.rating + amount);
-        
-        // Check for new subscribers when gaining viewers
-        if (amount > 0 && this.scene.subscriptionManager) {
+
+        if (amount > 0 && this.scene.subscriptionManager)
             this.scene.subscriptionManager.checkForNewSubscriber(oldRating, this.rating);
-        }
-        
-        if (!this.animating) {
-            this.animateRatingChange();
-        }
-        
-        if (this.rating >= this.goal) {
-            this.updateGoal();
-        }
-        
+
+        if (!this.animating) this.animateRatingChange();
+        if (this.rating >= this.goal) this.updateGoal();
+
         return this.rating <= 0;
     }
 
     animateRatingChange() {
         this.animating = true;
-        const startValue = this.displayRating;
-        const change = this.rating - startValue;
-        const duration = Math.min(800, Math.abs(change) * 15);
-        
+        const start = this.displayRating;
+        const end = this.rating;
+        const duration = Math.min(800, Math.abs(end - start) * 15);
+
         this.scene.tweens.add({
             targets: this,
-            displayRating: this.rating,
-            duration: duration,
+            displayRating: end,
+            duration,
             ease: 'Power1',
             onUpdate: () => {
-                this.viewersText.setText(`${Math.floor(this.displayRating)} viewers`);
-                this.goalText.setText(`Meta: ${Math.floor(this.displayRating)}/${this.goal}`);
-                
-                if (this.displayRating < startValue) {
-                    this.viewersText.setColor('#ff5555');
-                } else {
-                    this.viewersText.setColor('#55ff55');
-                }
+                const current = Math.floor(this.displayRating);
+                this.viewersText.setText(`${current} viewers`);
+                this.goalText.setText(`Meta: ${current}/${this.goal}`);
+                this.viewersText.setColor(this.displayRating < start ? '#ff5555' : '#55ff55');
             },
             onComplete: () => {
                 this.viewersText.setColor('#ffffff');
@@ -103,10 +86,7 @@ class AudienceManager {
     }
 
     showGoalReachedEffect(oldGoal, newGoal) {
-        // Posición relativa al goalText existente
-        const goalTextBounds = this.goalText.getBounds();
-        const yPosition = goalTextBounds.bottom - 40;
-        
+        const yPosition = this.goalText.getBounds().bottom - 40;
         const congratsText = this.scene.add.text(
             this.scene.cameras.main.centerX,
             yPosition,
@@ -118,10 +98,8 @@ class AudienceManager {
                 align: 'center',
                 padding: { x: 20, y: 10 }
             }
-        )
-        .setOrigin(0.5, 0)
-        .setDepth(20);
-        
+        ).setOrigin(0.5, 0).setDepth(20);
+
         this.scene.tweens.add({
             targets: congratsText,
             alpha: 0,
@@ -129,12 +107,11 @@ class AudienceManager {
             delay: 1500,
             onComplete: () => congratsText.destroy()
         });
-        
+
         this.scene.cameras.main.flash(300, 145, 71, 255);
     }
 
     cleanup() {
-        if (this.viewersText) this.viewersText.destroy();
-        if (this.goalText) this.goalText.destroy();
+        [this.viewersText, this.goalText, this.audienceTimer].forEach(obj => obj && obj.destroy());
     }
 }

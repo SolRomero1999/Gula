@@ -5,6 +5,8 @@ class MokbanManager {
         this.foodItem = null;
         this.stomachCapacity = 100;
         this.displayStomach = 100;
+        this.currentBowlLevel = 1;
+        this.maxBowlLevel = 5;
         
         this.foodConsumptionRate = 10;
         this.stomachRecoveryRate = 3;
@@ -50,11 +52,13 @@ class MokbanManager {
         const margin = 20;
         const startY = this.scene.cameras.main.height - margin - barHeight;
     
+        // Fondo de la barra
         this.scene.add.graphics()
             .fillStyle(0x333333, 1)
             .fillRect(margin, startY, barWidth, barHeight)
             .setDepth(20);
     
+        // Barra de estómago (verde por defecto)
         this.stomachBar = this.scene.add.graphics()
             .fillStyle(0x00ff00, 1)
             .fillRect(
@@ -64,6 +68,7 @@ class MokbanManager {
                 barHeight * (this.displayStomach / 100)
             ).setDepth(21);
     
+        // Guardar dimensiones para actualizaciones
         this.barHeight = barHeight;
         this.startY = startY;
         this.barWidth = barWidth;
@@ -74,11 +79,12 @@ class MokbanManager {
         this.foodItem = this.scene.add.sprite(
             this.scene.cameras.main.centerX,
             this.scene.cameras.main.centerY + 60,
-            'ramen_bowl1'
+            `ramen_bowl${this.currentBowlLevel}`
         ).setInteractive()
          .setScale(0.4)
          .setDepth(15);
         
+        // Área interactiva circular
         this.foodItem.setInteractive(
             new Phaser.Geom.Circle(
                 this.foodItem.width/2, 
@@ -88,12 +94,14 @@ class MokbanManager {
             Phaser.Geom.Circle.Contains
         );
         
+        // Evento al hacer click
         this.foodItem.on('pointerdown', () => {
             if (!this.scene.isGameOver) {
                 this.handleFoodClick();
             }
         });
         
+        // Animación flotante suave
         this.scene.tweens.add({
             targets: this.foodItem,
             y: this.foodItem.y - 3,
@@ -105,15 +113,27 @@ class MokbanManager {
     }
     
     handleFoodClick() {
+        // Bloquear si ya alcanzamos el nivel máximo
+        if (this.currentBowlLevel >= this.maxBowlLevel) {
+            this.showEmptyBowlMessage();
+            return;
+        }
+        
         this.lastEatTime = this.scene.time.now;
         this.resetPenalty('inactivity');
         
+        // Reducir capacidad del estómago
         this.stomachCapacity = Phaser.Math.Clamp(
             this.stomachCapacity - this.foodConsumptionRate, 
             0, 
             100
         );
         
+        // Avanzar al siguiente nivel del tazón
+        this.currentBowlLevel++;
+        this.foodItem.setTexture(`ramen_bowl${this.currentBowlLevel}`);
+        
+        // Ganancia de audiencia aleatoria
         const audienceGain = Phaser.Math.RND.integerInRange(
             this.audienceGainRange.min, 
             this.audienceGainRange.max
@@ -125,9 +145,10 @@ class MokbanManager {
             return;
         }
         
+        // Efecto visual de comer (sin cambio de escala)
         this.scene.tweens.add({
             targets: this.foodItem,
-            scale: 0.6,
+            alpha: 0.8,
             duration: 100,
             yoyo: true
         });
@@ -138,6 +159,15 @@ class MokbanManager {
         if (this.stomachCapacity <= 0 && !this.scene.isGameOver) {
             this.scene.triggerGameOver('stomach');
         }
+    }
+    
+    showEmptyBowlMessage() {
+        this.scene.addDialogueBox("Oh, it's empty.", "Miao Mao", { 
+            textColor: '#ffffff',
+            boxColor: 0x000000,
+            borderColor: 0xffffff,
+            borderThickness: 2
+        });
     }
     
     setupRecoveryTimer() {
@@ -163,6 +193,7 @@ class MokbanManager {
             callback: () => {
                 if (this.scene.isGameOver) return;
                 
+                // Penalización por inactividad
                 const timeSinceLastEat = (this.scene.time.now - this.lastEatTime) / 1000;
                 this.penalties.inactivity.timer = timeSinceLastEat;
                 
@@ -172,6 +203,7 @@ class MokbanManager {
                     this.resetPenalty('inactivity');
                 }
                 
+                // Penalización por estómago lleno
                 if (this.stomachCapacity >= 100) {
                     this.penalties.fullStomach.timer++;
                     if (this.penalties.fullStomach.timer > this.penalties.fullStomach.threshold) {
@@ -227,6 +259,13 @@ class MokbanManager {
         }
     }
     
+    resetBowlLevel() {
+        this.currentBowlLevel = 1;
+        if (this.foodItem) {
+            this.foodItem.setTexture('ramen_bowl1');
+        }
+    }
+    
     animateStomachBar() {
         this.scene.tweens.add({
             targets: this,
@@ -242,11 +281,13 @@ class MokbanManager {
     updateStomachBar() {
         this.stomachBar.clear();
         
-        let color = 0x00ff00;
+        let color = 0x00ff00; // Verde por defecto
+        
+        // Cambiar color según penalización activa
         if (this.penalties.fullStomach.active) {
-            color = this.penalties.fullStomach.color;
+            color = this.penalties.fullStomach.color; // Rojo
         } else if (this.penalties.inactivity.active) {
-            color = this.penalties.inactivity.color;
+            color = this.penalties.inactivity.color; // Amarillo
         }
         
         this.stomachBar.fillStyle(color, 1)
@@ -261,8 +302,8 @@ class MokbanManager {
     updateStomachBarColor(color) {
         this.stomachBar.clear();
         const currentColor = color || 
-                            (this.penalties.fullStomach.active ? this.penalties.fullStomach.color : 
-                             (this.penalties.inactivity.active ? this.penalties.inactivity.color : 0x00ff00));
+                           (this.penalties.fullStomach.active ? this.penalties.fullStomach.color : 
+                            (this.penalties.inactivity.active ? this.penalties.inactivity.color : 0x00ff00));
         
         this.stomachBar.fillStyle(currentColor, 1)
             .fillRect(

@@ -5,10 +5,10 @@ class SimpleChatSystem {
         this.maxMessages = 15;
         this.chatContainer = null;
         this.lineHeight = 32;
-        this.panelHeight = 500; 
+        this.panelHeight = 500;
         this.lastMessageTime = 0;
         this.messageCooldown = 1000;
-        
+
         this.scene.events.once('create', () => {
             this.setupChat();
             this.setupEventListeners();
@@ -16,38 +16,35 @@ class SimpleChatSystem {
     }
 
     setupChat() {
-        if (!this.scene.cameras || !this.scene.cameras.main) return;
-        
+        if (!this.scene.cameras?.main) return;
+
         const camera = this.scene.cameras.main;
         const chatX = camera.width - 270;
         const chatY = 70;
         this.panelHeight = camera.height - chatY - 20;
-        
-        this.chatContainer = this.scene.add.container(chatX, chatY)
-            .setDepth(50);
-        
+
+        this.chatContainer = this.scene.add.container(chatX, chatY).setDepth(50);
+
         const chatBackground = this.scene.add.graphics()
             .fillStyle(0x000000, 0.7)
             .fillRect(0, 0, 300, this.panelHeight)
             .lineStyle(1, 0x9147ff, 0.5)
             .strokeRect(0, 0, 300, this.panelHeight)
             .setDepth(50);
-        
+
         this.chatContainer.add(chatBackground);
     }
-    
+
     setupEventListeners() {
-        this.scene.events.on('eat', () => this.addMessage());
-        this.scene.events.on('inactivityWarning', () => this.addInactivityMessage());
-        this.scene.events.on('inactivityPenalty', () => {
-            if (this.canSendMessage()) this.addInactivityMessage();
-        });
-        this.scene.events.on('fullStomachWarning', () => this.addAngryMessage());
-        this.scene.events.on('fullStomachPenalty', () => {
-            if (this.canSendMessage()) this.addAngryMessage();
-        });
+        const { events } = this.scene;
+
+        events.on('eat', () => this.addMessage());
+        events.on('inactivityWarning', () => this.addInactivityMessage());
+        events.on('inactivityPenalty', () => this.canSendMessage() && this.addInactivityMessage());
+        events.on('fullStomachWarning', () => this.addAngryMessage());
+        events.on('fullStomachPenalty', () => this.canSendMessage() && this.addAngryMessage());
     }
-    
+
     canSendMessage() {
         const now = this.scene.time.now;
         if (now - this.lastMessageTime > this.messageCooldown) {
@@ -59,74 +56,71 @@ class SimpleChatSystem {
 
     addMessage() {
         if (!this.chatContainer) return;
-        const username = UserGenerator.generateUsername();
-        const message = MessageGenerator.generateMessage();
-        const color = UserGenerator.generateUserColor();
-        this.addSpecialMessage(username, message, color);
+        this.addSpecialMessage(
+            UserGenerator.generateUsername(),
+            MessageGenerator.generateMessage(),
+            UserGenerator.generateUserColor()
+        );
     }
-    
+
     addInactivityMessage() {
         if (!this.chatContainer) return;
-        const username = UserGenerator.generateUsername();
         const messages = MessageGenerator.getBoredMessages();
-        const message = messages[Math.floor(Math.random() * messages.length)];
-        const color = UserGenerator.generateUserColor();
-        this.addSpecialMessage(username, message, color);
+        this.addSpecialMessage(
+            UserGenerator.generateUsername(),
+            messages[Math.floor(Math.random() * messages.length)],
+            UserGenerator.generateUserColor()
+        );
     }
-    
+
     addAngryMessage() {
         if (!this.chatContainer) return;
-        const username = UserGenerator.generateUsername();
         const messages = MessageGenerator.getAngryMukbangMessages();
-        const message = messages[Math.floor(Math.random() * messages.length)];
-        const color = UserGenerator.generateUserColor();
-        this.addSpecialMessage(username, message, color);
+        this.addSpecialMessage(
+            UserGenerator.generateUsername(),
+            messages[Math.floor(Math.random() * messages.length)],
+            UserGenerator.generateUserColor()
+        );
     }
-    
+
     addSpecialMessage(username, message, color) {
         if (!this.chatContainer) return;
-        
+
         const messageContainer = this.scene.add.container(10, this.panelHeight);
-        this.chatContainer.add(messageContainer);
-        
-        const usernameText = this.scene.add.text(
-            0, 0, `${username}: `,
-            { font: '16px Arial', fill: color, padding: { x: 5, y: 2 } }
-        ).setOrigin(0, 0);
-        
-        const messageText = this.scene.add.text(
-            usernameText.width, 0, message,
-            {
-                font: '16px Arial',
-                fill: '#FFFFFF',
-                wordWrap: { width: 240 - usernameText.width },
-                padding: { x: 5, y: 2 },
-                lineSpacing: 4
-            }
-        ).setOrigin(0, 0);
-        
+        const usernameText = this.scene.add.text(0, 0, `${username}: `, {
+            font: '16px Arial',
+            fill: color,
+            padding: { x: 5, y: 2 }
+        }).setOrigin(0, 0);
+
+        const messageText = this.scene.add.text(usernameText.width, 0, message, {
+            font: '16px Arial',
+            fill: '#FFFFFF',
+            wordWrap: { width: 240 - usernameText.width },
+            padding: { x: 5, y: 2 },
+            lineSpacing: 4
+        }).setOrigin(0, 0);
+
         messageContainer.add([usernameText, messageText]);
+        this.chatContainer.add(messageContainer);
+
         const totalHeight = Math.max(usernameText.height, messageText.height) + 8;
-        
-        this.chatMessages.push({
-            container: messageContainer,
-            height: totalHeight
-        });
-        
+        this.chatMessages.push({ container: messageContainer, height: totalHeight });
+
         messageContainer.setAlpha(0);
         this.scene.tweens.add({
             targets: messageContainer,
             alpha: 1,
             duration: 300
         });
-        
+
         this.organizeMessages();
     }
 
     organizeMessages() {
         let totalHeight = 0;
         let firstVisibleIndex = 0;
-        
+
         for (let i = this.chatMessages.length - 1; i >= 0; i--) {
             totalHeight += this.chatMessages[i].height;
             if (totalHeight > this.panelHeight) {
@@ -134,14 +128,11 @@ class SimpleChatSystem {
                 break;
             }
         }
-        
+
         if (firstVisibleIndex > 0) {
-            for (let i = 0; i < firstVisibleIndex; i++) {
-                this.chatMessages[i].container.destroy();
-            }
-            this.chatMessages = this.chatMessages.slice(firstVisibleIndex);
+            this.chatMessages.splice(0, firstVisibleIndex).forEach(msg => msg.container.destroy());
         }
-        
+
         this.repositionMessages();
     }
 
@@ -156,6 +147,44 @@ class SimpleChatSystem {
                 ease: 'Power1'
             });
             currentY -= msg.height;
+        }
+    }
+    cleanup() {
+        // Limpiar todos los mensajes del chat de manera segura
+        if (this.chatMessages) {
+            // Filtrar primero los containers que aún existen
+            const validMessages = this.chatMessages.filter(msg => msg.container && msg.container.scene);
+            
+            // Destruir solo los que existen
+            validMessages.forEach(msg => {
+                try {
+                    if (msg.container.scene) { // Verificar que aún está en la escena
+                        msg.container.destroy(true);
+                    }
+                } catch (e) {
+                    console.warn("Error al destruir mensaje de chat:", e);
+                }
+            });
+            this.chatMessages = [];
+        }
+    
+        // Limpiar el contenedor principal de manera segura
+        if (this.chatContainer && this.chatContainer.scene) {
+            try {
+                this.chatContainer.destroy(true);
+            } catch (e) {
+                console.warn("Error al destruir chatContainer:", e);
+            }
+            this.chatContainer = null;
+        }
+    
+        // Limpiar cualquier evento registrado
+        if (this.scene) {
+            this.scene.events.off('eat');
+            this.scene.events.off('inactivityWarning');
+            this.scene.events.off('inactivityPenalty');
+            this.scene.events.off('fullStomachWarning');
+            this.scene.events.off('fullStomachPenalty');
         }
     }
 }
