@@ -21,6 +21,10 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.cleanup();
+        this.audienceManager = new AudienceManager(this);
+        this.moneyManager = new MoneyManager(this);
+        this.subscriptionManager = new SubscriptionManager(this, this.audienceManager, this.moneyManager);
+
         
         // 0: Fondo
         this.background = this.add.image(
@@ -34,26 +38,16 @@ class GameScene extends Phaser.Scene {
         // 5: Gato
         this.cat = this.add.image(
             this.cameras.main.centerX + 90,
-            this.cameras.main.centerY + 40,
+            this.cameras.main.centerY,
             'streamer'
         ).setOrigin(0.5, 0.5)
          .setScale(0.7)
          .setDepth(5);
         
-        // 8: Sombra mesa
-        this.deskShadow = this.add.graphics()
-            .fillStyle(0x000000, 0.3)
-            .fillEllipse(
-                this.cameras.main.centerX,
-                this.cameras.main.centerY + 140,
-                450,
-                20
-            ).setDepth(8);
-        
         // 10: Mesa
         this.desk = this.add.image(
             this.cameras.main.centerX,
-            this.cameras.main.centerY + 100,
+            this.cameras.main.centerY,
             'desk'
         ).setOrigin(0.5, 0.5)
          .setScale(0.8)
@@ -83,6 +77,7 @@ class GameScene extends Phaser.Scene {
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
+        
     }
 
     cleanup() {
@@ -99,6 +94,7 @@ class GameScene extends Phaser.Scene {
         this.time.removeAllEvents();
         this.tweens.killAll();
         this.children.removeAll();
+        if (this.subscriptionManager) this.subscriptionManager.cleanup();
     }
 
     createCuteButton() {

@@ -45,7 +45,13 @@ class AudienceManager {
     }
 
     changeRating(amount) {
+        const oldRating = this.rating;
         this.rating = Math.max(0, this.rating + amount);
+        
+        // Check for new subscribers when gaining viewers
+        if (amount > 0 && this.scene.subscriptionManager) {
+            this.scene.subscriptionManager.checkForNewSubscriber(oldRating, this.rating);
+        }
         
         if (!this.animating) {
             this.animateRatingChange();

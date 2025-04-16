@@ -46,7 +46,7 @@ class MokbanManager {
     
     createStomachBar() {
         const barWidth = 30;
-        const barHeight = this.scene.cameras.main.height * 0.9; 
+        const barHeight = this.scene.cameras.main.height * 0.88; 
         const margin = 20;
         const startY = this.scene.cameras.main.height - margin - barHeight;
     

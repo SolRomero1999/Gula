@@ -28,9 +28,9 @@ class SimpleChatSystem {
         
         const chatBackground = this.scene.add.graphics()
             .fillStyle(0x000000, 0.7)
-            .fillRect(0, 0, 260, this.panelHeight)
+            .fillRect(0, 0, 300, this.panelHeight)
             .lineStyle(1, 0x9147ff, 0.5)
-            .strokeRect(0, 0, 260, this.panelHeight)
+            .strokeRect(0, 0, 300, this.panelHeight)
             .setDepth(50);
         
         this.chatContainer.add(chatBackground);
