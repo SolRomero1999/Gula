@@ -4,10 +4,20 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', '../assets/background.jpg');
-        this.load.image('ramen_bowl1', '../assets/ramen_bowl1.png');
+        this.load.image('background', '../assets/background.png');
+        this.load.image('planta', '../assets/planta.png');
+        this.load.image('luces', '../assets/luces.png');
         this.load.image('desk', '../assets/desk.png'); 
+        this.load.image('ramen_bowl1', '../assets/ramen_bowl1.png');
+        this.load.image('ramen_bowl2', '../assets/ramen_bowl2.png');
+        this.load.image('ramen_bowl3', '../assets/ramen_bowl3.png');
+        this.load.image('ramen_bowl4', '../assets/ramen_bowl4.png');
+        this.load.image('ramen_bowl5', '../assets/ramen_bowl5.png');
+        this.load.image('palillos', '../assets/palillos.png');
+        this.load.image('PortaPalillos', '../assets/PortaPalillos.png');
         this.load.image('streamer', '../assets/streamer.png');
+        this.load.image('ojosc1', '../assets/OjosC1.png');
+        this.load.image('pupilasc1', '../assets/pupilasC1.png');
     }
 
     init() {
@@ -34,16 +44,44 @@ class GameScene extends Phaser.Scene {
         ).setOrigin(0.5, 0.5)
          .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
          .setDepth(0);
-        
+        // 1: Luces
+        this.luces = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'luces'
+        ).setOrigin(0.5, 0.5)
+         .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+         .setDepth(1);
+        // 1: Planta
+        this.planta = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'planta'
+        ).setOrigin(0.5, 0.5)
+         .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+         .setDepth(1);
         // 5: Gato
         this.cat = this.add.image(
-            this.cameras.main.centerX + 90,
+            this.cameras.main.centerX,
             this.cameras.main.centerY,
             'streamer'
         ).setOrigin(0.5, 0.5)
          .setScale(0.7)
          .setDepth(5);
-        
+         this.ojos = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'ojosc1'
+        ).setOrigin(0.5, 0.5)
+         .setScale(0.7)
+         .setDepth(6);
+         this.pupilas = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'pupilasc1'
+        ).setOrigin(0.5, 0.5)
+         .setScale(0.7)
+         .setDepth(7);
         // 10: Mesa
         this.desk = this.add.image(
             this.cameras.main.centerX,
@@ -52,7 +90,22 @@ class GameScene extends Phaser.Scene {
         ).setOrigin(0.5, 0.5)
          .setScale(0.8)
          .setDepth(10);
-        
+        // 11: PortaPalillos
+        this.PortaPalillos = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 100,
+            'PortaPalillos'
+        ).setOrigin(0.5, 0.5)
+         .setScale(0.8)
+         .setDepth(11);
+        // 12: Palillos
+        this.palillos = this.add.image(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 100,
+            'palillos'
+        ).setOrigin(0.5, 0.5)
+         .setScale(0.8)
+         .setDepth(12);
         // 15: Tazón (manejado por MokbanManager)
         this.mokbanManager = new MokbanManager(this);
         

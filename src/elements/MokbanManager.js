@@ -72,7 +72,7 @@ class MokbanManager {
     
     createFood() {
         this.foodItem = this.scene.add.sprite(
-            this.scene.cameras.main.centerX + 50,
+            this.scene.cameras.main.centerX,
             this.scene.cameras.main.centerY + 60,
             'ramen_bowl1'
         ).setInteractive()
