@@ -23,8 +23,7 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.cleanup();
-        
-        // Inicializar managers
+
         this.moneyManager = new MoneyManager(this);
         this.audienceManager = new AudienceManager(this);
         this.subscriptionManager = new SubscriptionManager(this, this.audienceManager, this.moneyManager);
@@ -32,11 +31,10 @@ class GameScene extends Phaser.Scene {
         this.chatSystem = new SimpleChatSystem(this);
         this.cuteActionManager = new CuteActionManager(this, this.audienceManager, this.chatSystem);
         this.foodPurchaseManager = new FoodPurchaseManager(this, this.moneyManager, this.mokbanManager);
-    
-        // Configurar elementos visuales
+        this.botManager = new BotManager(this, this.moneyManager, this.audienceManager, this.chatSystem); 
+
         this.setupVisualElements();
-        
-        // Animación del streamer
+  
         this.setupStreamerAnimation();
     }
 
@@ -88,35 +86,28 @@ class GameScene extends Phaser.Scene {
     }
 
     cleanup() {
-        // Primero limpiar elementos generales que podrían afectar a los managers
-        this.time.removeAllEvents();
-        this.tweens.killAll();
-        
-        // Limpiar managers en orden inverso al de creación
-        this.foodPurchaseManager?.cleanup();
-        this.cuteActionManager?.cleanup();
-        this.chatSystem?.cleanup();
+        this.audienceManager?.cleanup();
         this.mokbanManager?.cleanup();
         this.subscriptionManager?.cleanup();
-        this.audienceManager?.cleanup();
+        this.cuteActionManager?.cleanup();
         this.moneyManager?.cleanup();
-        
-        // Finalmente limpiar todos los hijos de la escena
+        this.foodPurchaseManager?.cleanup();
+        this.chatSystem?.cleanup();
+        this.botManager?.cleanup(); 
+        this.time.removeAllEvents();
+        this.tweens.killAll();
         this.children.removeAll();
     }
 
     triggerGameOver(loseType) {
-        if (this.isGameOver) return; // Evitar múltiples llamadas
+        if (this.isGameOver) return; 
         
         this.isGameOver = true;
         
-        // Desactivar interactividad primero
         this.input.enabled = false;
-        
-        // Limpiar
+    
         this.cleanup();
         
-        // Cambiar de escena
         this.scene.start('GameOverScene', {
             loseType: loseType,
             audienceRating: this.audienceManager?.rating || 0,
@@ -125,14 +116,14 @@ class GameScene extends Phaser.Scene {
     }
     
     addDialogueBox(text, character, styleOptions = {}) {
-        // Validación EXTRA robusta
         if (!text || typeof text !== 'string' || !text.trim()) {
             console.warn("Texto de diálogo inválido:", text);
-            return null; // Retorna null para manejar casos de error
+            return null; 
         }
     
-        // Destruye el diálogo anterior de manera SEGURA
-        if (this.currentDialogueBox) {
+        // Limpiar diálogo anterior de forma segura
+        if (this.currentDialogueBox && this.currentDialogueBox.scene) {
+            this.tweens.killTweensOf(this.currentDialogueBox);
             this.currentDialogueBox.destroy(true);
             this.currentDialogueBox = null;
         }
@@ -148,7 +139,7 @@ class GameScene extends Phaser.Scene {
             ...styleOptions
         };
     
-        // Crea el texto PRIMERO (sin wordWrap inicial)
+        // Crear elementos del diálogo
         const dialogueText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition,
@@ -158,16 +149,13 @@ class GameScene extends Phaser.Scene {
                 fill: style.textColor
             }
         ).setOrigin(0.5, 0);
-    
-        // Aplica wordWrap DESPUÉS de crear el texto
+        
         dialogueText.setWordWrapWidth(style.maxWidth - 2 * style.padding);
     
-        // Calcula dimensiones
         const textBounds = dialogueText.getBounds();
-        const boxWidth = Math.max(100, textBounds.width + 2 * style.padding); // Ancho mínimo de 100
+        const boxWidth = Math.max(100, textBounds.width + 2 * style.padding); 
         const boxHeight = textBounds.height + 2 * style.padding;
     
-        // Caja de fondo
         const dialogueBox = this.add.graphics()
             .fillStyle(style.boxColor, 0.8)
             .fillRoundedRect(
@@ -186,7 +174,6 @@ class GameScene extends Phaser.Scene {
                 10
             );
     
-        // Texto del nombre
         const nameText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition - style.padding - 20,
@@ -199,27 +186,29 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5, 0.5);
     
-        // Contenedor
         this.currentDialogueBox = this.add.container()
             .add([dialogueBox, dialogueText, nameText])
             .setDepth(100);
     
-        // Auto-eliminación después de 3 segundos
-        this.time.delayedCall(3000, () => {
-            if (this.currentDialogueBox) {
-                this.tweens.add({
-                    targets: this.currentDialogueBox,
-                    alpha: 0,
-                    duration: 500,
-                    onComplete: () => {
-                        this.currentDialogueBox.destroy(true);
-                        this.currentDialogueBox = null;
-                    }
-                });
+        // Configurar auto-destrucción con manejo seguro
+        const destroyDialog = () => {
+            if (this.currentDialogueBox && this.currentDialogueBox.scene) {
+                this.tweens.killTweensOf(this.currentDialogueBox);
+                this.currentDialogueBox.destroy(true);
+                this.currentDialogueBox = null;
             }
+        };
+    
+        // Animación de desvanecimiento
+        this.tweens.add({
+            targets: this.currentDialogueBox,
+            alpha: 0,
+            duration: 500,
+            delay: 2500,
+            onComplete: destroyDialog
         });
     
-        return this.currentDialogueBox; // Para referencia externa
+        return this.currentDialogueBox; 
     }
 
     shutdown() {

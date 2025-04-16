@@ -111,4 +111,48 @@ class MessageGenerator {
         ];
     }
     
+    static getBotMessages() {
+        const emotes = ['Kappa', 'Bot', 'BibleThump', 'MonkaS', 'PogChamp'];
+        const emote = emotes[Math.floor(Math.random() * emotes.length)];
+        
+        return [
+            `New viewer here! ${emote}`,
+            `Just joined the stream! ${emote}`,
+            `Hello everyone! ${emote}`,
+            `This content is great! ${emote}`,
+            `So much fun watching this! ${emote}`,
+            `Nice stream! ${emote}`,
+            `Just discovered this channel! ${emote}`,
+            `Watching from my server farm! ${emote}`,
+            `Beep boop ${emote}`,
+            `01001000 01101001 ${emote}`,
+            `Nice content human ${emote}`,
+            `*generic positive comment* ${emote}`,
+            `I am definitely not a bot ${emote}`,
+            `100% organic viewer ${emote}`
+        ];
+    }
+
+    static getBotDiscoveredMessages() {
+        const emotes = ['Angry', 'PepeHands', 'WutFace', 'DansGame', 'MingLee', 'FailFish'];
+        const emote = emotes[Math.floor(Math.random() * emotes.length)];
+        
+        return [
+            `THESE ARE BOTS! ${emote}`,
+            `FAKE VIEWERS DETECTED ${emote}`,
+            `CHEATING WITH BOTS?? ${emote}`,
+            `*unsubs* BOTS ARE LAME ${emote}`,
+            `I CAN SEE THE BOT NAMES ${emote}`,
+            `REPORTED FOR BOTTING ${emote}`,
+            `SO DISAPPOINTING... ${emote}`,
+            `VIEW COUNT IS FAKE ${emote}`,
+            `EVERYONE KNOWS THESE ARE BOTS ${emote}`,
+            `PATHETIC BOT USAGE ${emote}`,
+            `LAME BOT VIEWERS ${emote}`,
+            `CAN'T BELIEVE YOU'D USE BOTS ${emote}`,
+            `THIS RUINS THE STREAM ${emote}`,
+            `I'M TELLING EVERYONE ABOUT THIS ${emote}`,
+            `BYE FAKE STREAMER ${emote}`
+        ];
+    }
 }

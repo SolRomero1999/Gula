@@ -1,4 +1,3 @@
-// Configuración global del juego
 const GameConfig = {
     type: Phaser.AUTO,
     scale: {

@@ -11,19 +11,18 @@ class FoodPurchaseManager {
     }
 
     createBuyButton() {
-        // Crear botón en la parte inferior izquierda
         this.buyButton = this.scene.add.rectangle(
-            120, // Posición X (izquierda)
-            this.scene.cameras.main.height - 60, // Posición Y (abajo)
+            400, 
+            this.scene.cameras.main.height - 60, 
             200,
             50,
-            0x4CAF50 // Color verde
+            0x4CAF50 
         )
         .setInteractive()
         .setDepth(60);
         
         this.buttonText = this.scene.add.text(
-            120,
+            400,
             this.scene.cameras.main.height - 60,
             `Buy Food ($${this.foodPrice})`,
             {
@@ -33,17 +32,16 @@ class FoodPurchaseManager {
             }
         ).setOrigin(0.5)
          .setDepth(61);
-        
-        // Efectos hover
+
         this.buyButton.on('pointerover', () => {
             if (!this.scene.isGameOver) {
-                this.buyButton.setFillStyle(0x388E3C); // Verde más oscuro
+                this.buyButton.setFillStyle(0x388E3C); 
             }
         });
         
         this.buyButton.on('pointerout', () => {
             if (!this.scene.isGameOver) {
-                this.buyButton.setFillStyle(0x4CAF50); // Verde original
+                this.buyButton.setFillStyle(0x4CAF50); 
             }
         });
         
@@ -55,15 +53,10 @@ class FoodPurchaseManager {
     }
 
     buyFood() {
-        // Verificar si tiene suficiente dinero
         if (this.moneyManager.money >= this.foodPrice) {
-            // Gastar dinero
             this.moneyManager.addMoney(-this.foodPrice);
-            
-            // Resetear el nivel del tazón
             this.resetBowl();
-            
-            // Feedback visual
+
             this.scene.tweens.add({
                 targets: [this.buyButton, this.buttonText],
                 scaleX: 1.1,
@@ -79,7 +72,6 @@ class FoodPurchaseManager {
                 borderThickness: 2
             });
         } else {
-            // No tiene suficiente dinero
             this.scene.tweens.add({
                 targets: [this.buyButton, this.buttonText],
                 tint: 0xff0000,

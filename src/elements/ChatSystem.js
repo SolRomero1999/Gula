@@ -149,36 +149,9 @@ class SimpleChatSystem {
             currentY -= msg.height;
         }
     }
+   
     cleanup() {
-        // Limpiar todos los mensajes del chat de manera segura
-        if (this.chatMessages) {
-            // Filtrar primero los containers que aún existen
-            const validMessages = this.chatMessages.filter(msg => msg.container && msg.container.scene);
-            
-            // Destruir solo los que existen
-            validMessages.forEach(msg => {
-                try {
-                    if (msg.container.scene) { // Verificar que aún está en la escena
-                        msg.container.destroy(true);
-                    }
-                } catch (e) {
-                    console.warn("Error al destruir mensaje de chat:", e);
-                }
-            });
-            this.chatMessages = [];
-        }
-    
-        // Limpiar el contenedor principal de manera segura
-        if (this.chatContainer && this.chatContainer.scene) {
-            try {
-                this.chatContainer.destroy(true);
-            } catch (e) {
-                console.warn("Error al destruir chatContainer:", e);
-            }
-            this.chatContainer = null;
-        }
-    
-        // Limpiar cualquier evento registrado
+        // 1. Limpiar eventos
         if (this.scene) {
             this.scene.events.off('eat');
             this.scene.events.off('inactivityWarning');
@@ -186,5 +159,9 @@ class SimpleChatSystem {
             this.scene.events.off('fullStomachWarning');
             this.scene.events.off('fullStomachPenalty');
         }
+
+        // 2. Solo resetear las variables, Phaser se encargará de los objetos
+        this.chatMessages = [];
+        this.chatContainer = null;
     }
 }
