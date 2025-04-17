@@ -93,13 +93,20 @@ class CuteActionManager {
     }
 
     showEffects(result) {
-        this.scene.addDialogueBox(result.message, "Miao Mao", {
+        // Cambiar los assets temporalmente
+        this.scene.streamer.setTexture('streamerT');
+        this.scene.OjosC1_02.setTexture('ojosc2');
+        this.scene.pupilasc1.setTexture('pupilasc2');
+    
+        // Mostrar el diálogo
+        const dialogue = this.scene.addDialogueBox(result.message, "Miao Mao", {
             boxColor: 0x000000,
             borderColor: 0xFFFFFF,
             textColor: "#FFFFFF",
             borderThickness: 2
         });
-
+    
+        // Configurar el chat y efectos visuales
         const username = UserGenerator.generateUsername();
         const userColor = UserGenerator.generateUserColor();
         const chatMessage = result.isOverusing ? 
@@ -107,7 +114,7 @@ class CuteActionManager {
             MessageGenerator.getRandomPositiveReaction();
         
         this.chatSystem.addSpecialMessage(username, chatMessage, userColor);
-
+    
         if (result.isOverusing) {
             this.scene.cameras.main.shake(300, 0.02);
             this.scene.tweens.add({
@@ -125,13 +132,26 @@ class CuteActionManager {
                 yoyo: true
             });
         }
-
+    
         this.scene.tweens.add({
             targets: this.button,
             scaleX: 0.9,
             scaleY: 0.9,
             duration: 100,
             yoyo: true
+        });
+    
+        // Restaurar los assets originales cuando el diálogo desaparezca
+        this.scene.time.delayedCall(3000, () => {
+            if (this.scene.streamer && this.scene.streamer.scene) {
+                this.scene.streamer.setTexture('streamer');
+            }
+            if (this.scene.OjosC1_02 && this.scene.OjosC1_02.scene) {
+                this.scene.OjosC1_02.setTexture('OjosC1_02');
+            }
+            if (this.scene.pupilasc1 && this.scene.pupilasc1.scene) {
+                this.scene.pupilasc1.setTexture('pupilasc1');
+            }
         });
     }
 

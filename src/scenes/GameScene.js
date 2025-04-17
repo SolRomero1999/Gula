@@ -8,7 +8,8 @@ class GameScene extends Phaser.Scene {
             'background', 'planta', 'luces', 'desk',
             'ramen_bowl1', 'ramen_bowl2', 'ramen_bowl3','ramen_bowl4', 'ramen_bowl5', 
             'palillos','PortaPalillos', 
-            'streamer', 'ojosc1', 'pupilasc1'
+            'streamer', 'ojosc1', 'OjosC1_02', 'pupilasc1',
+            'streamerT', 'ojosc2', 'pupilasc2', 'pupilasCorazon',
         ];
     
         assets.forEach(asset => {
@@ -27,6 +28,7 @@ class GameScene extends Phaser.Scene {
         this.moneyManager = new MoneyManager(this);
         this.audienceManager = new AudienceManager(this);
         this.subscriptionManager = new SubscriptionManager(this, this.audienceManager, this.moneyManager);
+        this.donationManager = new DonationManager(this, this.subscriptionManager, this.moneyManager);
         this.mokbanManager = new MokbanManager(this);
         this.chatSystem = new SimpleChatSystem(this);
         this.cuteActionManager = new CuteActionManager(this, this.audienceManager, this.chatSystem);
@@ -34,8 +36,8 @@ class GameScene extends Phaser.Scene {
         this.botManager = new BotManager(this, this.moneyManager, this.audienceManager, this.chatSystem); 
 
         this.setupVisualElements();
-  
         this.setupStreamerAnimation();
+        this.setupPupilTracking(); // Nueva función para el seguimiento de pupilas
     }
 
     setupVisualElements() {
@@ -48,7 +50,7 @@ class GameScene extends Phaser.Scene {
             { key: 'luces', depth: 1, size: fullSize },
             { key: 'planta', depth: 1, size: fullSize },
             { key: 'streamer', depth: 5, scale: 0.7 },
-            { key: 'ojosc1', depth: 6, scale: 0.7 },
+            { key: 'OjosC1_02', depth: 6, scale: 0.7 },
             { key: 'pupilasc1', depth: 7, scale: 0.7 },
             { key: 'desk', depth: 10, scale: 0.8 },
             { key: 'PortaPalillos', depth: 11, yOffset: -100, scale: 0.8 },
@@ -72,6 +74,13 @@ class GameScene extends Phaser.Scene {
     
             this[config.key] = image;  
         });
+
+        // Guardar posición original de las pupilas para referencia
+        this.pupilOriginalPosition = {
+            x: this.pupilasc1.x,
+            y: this.pupilasc1.y
+        };
+        this.pupilMaxMovement = 8; // Máximo movimiento en píxeles desde el centro
     }
 
     setupStreamerAnimation() {
@@ -85,10 +94,43 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    setupPupilTracking() {
+        // Configurar seguimiento del mouse para las pupilas
+        this.input.on('pointermove', (pointer) => {
+            if (!this.pupilasc1 || !this.OjosC1_02) return;
+            
+            // Calcular la posición relativa del mouse respecto a los ojos
+            const eyeCenterX = this.OjosC1_02.x;
+            const eyeCenterY = this.OjosC1_02.y;
+            
+            // Distancia del mouse al centro de los ojos
+            const dx = pointer.x - eyeCenterX;
+            const dy = pointer.y - eyeCenterY;
+            
+            // Normalizar y limitar el movimiento
+            const distance = Math.min(Math.sqrt(dx * dx + dy * dy), this.pupilMaxMovement);
+            const angle = Math.atan2(dy, dx);
+            
+            // Nueva posición de las pupilas (movimiento circular limitado)
+            const newX = this.pupilOriginalPosition.x + Math.cos(angle) * distance;
+            const newY = this.pupilOriginalPosition.y + Math.sin(angle) * distance;
+            
+            // Aplicar movimiento suavizado
+            this.tweens.add({
+                targets: this.pupilasc1,
+                x: newX,
+                y: newY,
+                duration: 100,
+                ease: 'Sine.easeOut'
+            });
+        });
+    }
+
     cleanup() {
         this.audienceManager?.cleanup();
         this.mokbanManager?.cleanup();
         this.subscriptionManager?.cleanup();
+        this.donationManager?.cleanup();
         this.cuteActionManager?.cleanup();
         this.moneyManager?.cleanup();
         this.foodPurchaseManager?.cleanup();
@@ -97,7 +139,14 @@ class GameScene extends Phaser.Scene {
         this.time.removeAllEvents();
         this.tweens.killAll();
         this.children.removeAll();
+        
+        // Limpiar el evento de seguimiento de pupilas
+        if (this.input) {
+            this.input.off('pointermove');
+        }
     }
+
+
 
     triggerGameOver(loseType) {
         if (this.isGameOver) return; 
