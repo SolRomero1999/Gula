@@ -87,8 +87,8 @@ class CreditsScene extends Phaser.Scene {
                 role: "Programmer",
                 color: "#1E90FF",
                 links: [
-                    { text: "GitHub", url: "https://github.com/SolRomero1999" },
-                    { text: "Email", url: "mailto:solromero051099@gmail.com" }
+                    { text: "Twitter", url: "https://x.com/Sawkhe99" },
+                    { text: "GitHub", url: "https://github.com/SolRomero1999" }
                 ]
             }
         ];

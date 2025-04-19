@@ -7,6 +7,7 @@ class GameScene extends Phaser.Scene {
         const assets = [
             'background', 'planta', 'luces', 'desk',
             'ramen_bowl1', 'ramen_bowl2', 'ramen_bowl3','ramen_bowl4', 'ramen_bowl5', 
+            'sushi1', 'sushi2', 'sushi3','sushi4', 'sushi5', 'sushi6', 'sushi7', 'sushi8','sushi9', 'sushi10', 'sushi11', 'sushi12', 
             'palillos','PortaPalillos', 
             'streamer', 'ojosc1', 'OjosC1_02', 'pupilasc1',
             'streamerG', 'OjosC1_03',

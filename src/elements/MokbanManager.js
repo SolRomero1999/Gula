@@ -2,15 +2,22 @@ class MokbanManager {
     constructor(scene) {
         this.scene = scene;
         this.stomachBar = null;
-        this.foodItem = null;
+        this.foodItem = null;       
+        this.sushiItem = null;      
         this.stomachCapacity = 100;
         this.displayStomach = 100;
+        
         this.currentBowlLevel = 1;
-        this.maxBowlLevel = 5;        
-        this.foodConsumptionRate = 10;
+        this.maxBowlLevel = 5;
+        
+        this.currentSushiLevel = 1;
+        this.maxSushiLevel = 12;
+        
+        this.foodConsumptionRate = 10;  
+        this.sushiConsumptionRate = 3;  
         this.stomachRecoveryRate = 3;
         this.audienceGainRange = { min: 50, max: 100 };
-        this.hands = null; 
+        this.hands = null;
         
         this.penalties = {
             inactivity: {
@@ -42,7 +49,8 @@ class MokbanManager {
     init() {
         this.createStomachBar();
         this.createFood();
-        this.createHands(); 
+        this.createSushi();
+        this.createHands();
         this.setupRecoveryTimer();
         this.setupPenaltyChecks();
         this.updateStreamerAppearance();
@@ -51,16 +59,17 @@ class MokbanManager {
     createHands() {
         this.hands = this.scene.add.sprite(
             this.scene.cameras.main.centerX,
-            this.scene.cameras.main.centerY+5,
+            this.scene.cameras.main.centerY + 5,
             'ManosFull'
         ).setVisible(false)
-         .setDepth(30); 
+         .setDepth(30);
 
-        this.hands.setScale(0.6); 
+        this.hands.setScale(0.6);
     }
+    
     createStomachBar() {
         const barWidth = 30;
-        const barHeight = this.scene.cameras.main.height * 0.88; 
+        const barHeight = this.scene.cameras.main.height * 0.88;
         const margin = 20;
         const startY = this.scene.cameras.main.height - margin - barHeight;
     
@@ -87,7 +96,7 @@ class MokbanManager {
     createFood() {
         this.foodItem = this.scene.add.sprite(
             this.scene.cameras.main.centerX,
-            this.scene.cameras.main.centerY + 60,
+            this.scene.cameras.main.centerY + 150,
             `ramen_bowl${this.currentBowlLevel}`
         ).setInteractive()
          .setScale(0.4)
@@ -108,19 +117,39 @@ class MokbanManager {
             }
         });
         
-        this.scene.tweens.add({
-            targets: this.foodItem,
-            y: this.foodItem.y - 3,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
+        // Se eliminó la animación flotante
+    }
+    
+    createSushi() {
+        this.sushiItem = this.scene.add.sprite(
+            this.scene.cameras.main.centerX - 350,
+            this.scene.cameras.main.centerY + 160,
+            `sushi${this.currentSushiLevel}`
+        ).setInteractive()
+         .setScale(0.6)
+         .setDepth(16);
+        
+        this.sushiItem.setInteractive(
+            new Phaser.Geom.Circle(
+                this.sushiItem.width/2, 
+                this.sushiItem.height/2, 
+                this.sushiItem.width * 0.6
+            ), 
+            Phaser.Geom.Circle.Contains
+        );
+        
+        this.sushiItem.on('pointerdown', () => {
+            if (!this.scene.isGameOver) {
+                this.handleSushiClick();
+            }
         });
+        
+        // Se eliminó la animación flotante
     }
     
     handleFoodClick() {
         if (this.currentBowlLevel >= this.maxBowlLevel) {
-            this.showEmptyBowlMessage();
+            this.showEmptyBowlMessage("¡El tazón de ramen está vacío!");
             return;
         }
         
@@ -136,6 +165,50 @@ class MokbanManager {
         this.currentBowlLevel++;
         this.foodItem.setTexture(`ramen_bowl${this.currentBowlLevel}`);
         
+        this.gainAudience();
+    }
+    
+    handleSushiClick() {
+        if (this.currentSushiLevel >= this.maxSushiLevel) {
+            this.showEmptyBowlMessage("¡No quedan más piezas de sushi!");
+            return;
+        }
+        
+        this.lastEatTime = this.scene.time.now;
+        this.resetPenalty('inactivity');
+        
+        this.stomachCapacity = Phaser.Math.Clamp(
+            this.stomachCapacity - this.sushiConsumptionRate,
+            0,
+            100
+        );
+        
+        this.currentSushiLevel++;
+        this.sushiItem.setTexture(`sushi${this.currentSushiLevel}`);
+        
+        this.gainAudience();
+    }
+
+    resetBowlLevel() {
+        this.currentBowlLevel = 1;
+        if (this.foodItem) {
+            this.foodItem.setTexture('ramen_bowl1');
+        }
+    }
+    
+    resetSushiLevel() {
+        this.currentSushiLevel = 1;
+        if (this.sushiItem) {
+            this.sushiItem.setTexture('sushi1');
+        }
+    }
+    
+    resetFoodLevels() {
+        this.resetBowlLevel();
+        this.resetSushiLevel();
+    }
+    
+    gainAudience() {
         const audienceGain = Phaser.Math.RND.integerInRange(
             this.audienceGainRange.min, 
             this.audienceGainRange.max
@@ -147,13 +220,6 @@ class MokbanManager {
             return;
         }
         
-        this.scene.tweens.add({
-            targets: this.foodItem,
-            alpha: 0.8,
-            duration: 100,
-            yoyo: true
-        });
-        
         this.animateStomachBar();
         this.scene.events.emit('eat', audienceGain);
         
@@ -162,8 +228,8 @@ class MokbanManager {
         }
     }
     
-    showEmptyBowlMessage() {
-        this.scene.addDialogueBox("Oh, it's empty.", "Miao Mao", { 
+    showEmptyBowlMessage(message) {
+        this.scene.addDialogueBox(message, "Miao Mao", { 
             textColor: '#ffffff',
             boxColor: 0x000000,
             borderColor: 0xffffff,
@@ -258,10 +324,15 @@ class MokbanManager {
         }
     }
     
-    resetBowlLevel() {
+    resetFoodLevels() {
         this.currentBowlLevel = 1;
+        this.currentSushiLevel = 1;
+        
         if (this.foodItem) {
             this.foodItem.setTexture('ramen_bowl1');
+        }
+        if (this.sushiItem) {
+            this.sushiItem.setTexture('sushi1');
         }
     }
     
@@ -321,8 +392,8 @@ class MokbanManager {
         this.scene.streamer.setTexture(bodyTexture);
         this.scene.OjosC1_02.setTexture(eyesTexture);
         this.scene.OjosC1_02.setVisible(true);
-        this.scene.pupilasc1.setTexture(pupilsTexture); 
-        this.scene.pupilasc1.setVisible(true); 
+        this.scene.pupilasc1.setTexture(pupilsTexture);
+        this.scene.pupilasc1.setVisible(true);
     }
     
     updateStomachBarColor(color) {
@@ -343,6 +414,7 @@ class MokbanManager {
     cleanup() {
         if (this.stomachBar) this.stomachBar.destroy();
         if (this.foodItem) this.foodItem.destroy();
-        if (this.hands) this.hands.destroy(); 
+        if (this.sushiItem) this.sushiItem.destroy();
+        if (this.hands) this.hands.destroy();
     }
 }
