@@ -63,7 +63,7 @@ class CuteActionManager {
         );
         
         if (gameOver) {
-            this.scene.triggerGameOver('audience');
+            this.scene.triggerGameEnd('audience');
             return;
         }
 

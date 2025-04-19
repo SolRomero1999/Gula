@@ -4,6 +4,7 @@ class MoneyManager {
         this.money = 0;
 
         this.createMoneyPanel();
+        this.totalEarnings = 0; 
     }
 
     createMoneyPanel() {
@@ -40,6 +41,7 @@ class MoneyManager {
 
     addMoney(amount) {
         this.money += amount;
+        this.totalEarnings += amount;  // Acumular ganancias totales
         this.updateMoneyText();
     }
 

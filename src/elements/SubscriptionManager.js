@@ -9,6 +9,7 @@ class SubscriptionManager {
         this.notificationQueue = [];
         this.isShowingNotification = false;
         this.notificationOffset = 0;
+        this.totalSubscriptions = 0; 
     }
     
 
@@ -52,6 +53,7 @@ class SubscriptionManager {
         
         this.queueSubscriberNotification(randomName);
         this.moneyManager.addMoney(50); 
+        this.totalSubscriptions++; 
     }
 
     queueSubscriberNotification(name) {

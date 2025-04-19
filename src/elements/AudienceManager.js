@@ -1,20 +1,27 @@
 class AudienceManager {
     constructor(scene, initialRating = 100, initialGoal = 1000) {
         this.scene = scene;
-        this.rating = this.displayRating = initialRating;
+        this.rating = initialRating;
         this.goal = initialGoal;
         this.goals = [1000, 2500, 5000, 10000];
-        this.animating = false;
         this.init();
+        this.peakViewers = initialRating; 
     }
 
     init() {
-        this.viewersText = this.createText(this.scene.cameras.main.width - 20, 20, `${this.rating} viewers`, '#000000');
-        this.goalText = this.createText(this.scene.cameras.main.centerX, 20, `Meta: ${this.rating}/${this.goal}`, '#9147ff', 0.5);
+        // Solo mostramos el texto de la meta en el centro
+        this.goalText = this.createText(
+            this.scene.cameras.main.centerX, 
+            20, 
+            `Meta: ${this.rating}/${this.goal}`, 
+            '#9147ff', 
+            0.5
+        );
+        
         this.setupAudienceTimer();
     }
 
-    createText(x, y, text, bgColor, originX = 1) {
+    createText(x, y, text, bgColor, originX = 0.5) {
         return this.scene.add.text(x, y, text, {
             font: '24px Arial',
             fill: '#ffffff',
@@ -32,47 +39,30 @@ class AudienceManager {
             callback: () => {
                 if (!this.scene.isGameOver) {
                     const lostAudience = Math.max(1, Math.floor(this.rating * 0.05));
-                    if (this.changeRating(-lostAudience)) this.scene.triggerGameOver('audience');
+                    if (this.changeRating(-lostAudience)) this.scene.triggerGameEnd('audience');
                 }
             }
         });
     }
 
     changeRating(amount) {
-        const oldRating = this.rating;
         this.rating = Math.max(0, this.rating + amount);
 
-        if (amount > 0 && this.scene.subscriptionManager)
-            this.scene.subscriptionManager.checkForNewSubscriber(oldRating, this.rating);
+        // Actualizamos el texto de la meta
+        this.goalText.setText(`Meta: ${this.rating}/${this.goal}`);
+        if (this.rating > this.peakViewers) {
+            this.peakViewers = this.rating;
+        }
 
-        if (!this.animating) this.animateRatingChange();
-        if (this.rating >= this.goal) this.updateGoal();
+        if (amount > 0 && this.scene.subscriptionManager) {
+            this.scene.subscriptionManager.checkForNewSubscriber(this.rating - amount, this.rating);
+        }
+
+        if (this.rating >= this.goal) {
+            this.updateGoal();
+        }
 
         return this.rating <= 0;
-    }
-
-    animateRatingChange() {
-        this.animating = true;
-        const start = this.displayRating;
-        const end = this.rating;
-        const duration = Math.min(800, Math.abs(end - start) * 15);
-
-        this.scene.tweens.add({
-            targets: this,
-            displayRating: end,
-            duration,
-            ease: 'Power1',
-            onUpdate: () => {
-                const current = Math.floor(this.displayRating);
-                this.viewersText.setText(`${current} viewers`);
-                this.goalText.setText(`Meta: ${current}/${this.goal}`);
-                this.viewersText.setColor(this.displayRating < start ? '#ff5555' : '#55ff55');
-            },
-            onComplete: () => {
-                this.viewersText.setColor('#ffffff');
-                this.animating = false;
-            }
-        });
     }
 
     updateGoal() {
@@ -86,7 +76,8 @@ class AudienceManager {
     }
 
     showGoalReachedEffect(oldGoal, newGoal) {
-        const yPosition = this.goalText.getBounds().bottom - 40;
+        const yPosition = this.goalText.getBounds().bottom + 10;
+        
         const congratsText = this.scene.add.text(
             this.scene.cameras.main.centerX,
             yPosition,
@@ -100,6 +91,7 @@ class AudienceManager {
             }
         ).setOrigin(0.5, 0).setDepth(20);
 
+        // Animación de la notificación
         this.scene.tweens.add({
             targets: congratsText,
             alpha: 0,
@@ -108,10 +100,15 @@ class AudienceManager {
             onComplete: () => congratsText.destroy()
         });
 
+        // Efecto visual
         this.scene.cameras.main.flash(300, 145, 71, 255);
+        
+        // Actualizamos el texto de la meta inmediatamente
+        this.goalText.setText(`Meta: ${this.rating}/${this.goal}`);
     }
 
     cleanup() {
-        [this.viewersText, this.goalText, this.audienceTimer].forEach(obj => obj && obj.destroy());
+        if (this.goalText) this.goalText.destroy();
+        if (this.audienceTimer) this.audienceTimer.destroy();
     }
 }

@@ -1,5 +1,6 @@
 class DonationManager {
     constructor(scene, subscriptionManager, moneyManager) {
+        this.totalDonations = 0; 
         this.scene = scene;
         this.subscriptionManager = subscriptionManager;
         this.moneyManager = moneyManager;
@@ -52,6 +53,7 @@ class DonationManager {
         
         // Mostrar notificación
         this.queueDonationNotification(donorName, amount);
+        this.totalDonations += amount;
     }
 
     queueDonationNotification(name, amount) {

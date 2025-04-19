@@ -216,7 +216,7 @@ class MokbanManager {
         
         const gameOver = this.scene.audienceManager.changeRating(audienceGain);
         if (gameOver) {
-            this.scene.triggerGameOver('audience');
+            this.scene.triggerGameEnd('audience');
             return;
         }
         
@@ -224,7 +224,7 @@ class MokbanManager {
         this.scene.events.emit('eat', audienceGain);
         
         if (this.stomachCapacity <= 0 && !this.scene.isGameOver) {
-            this.scene.triggerGameOver('stomach');
+            this.scene.triggerGameEnd('stomach');
         }
     }
     
@@ -309,7 +309,7 @@ class MokbanManager {
         this.updateStomachBarColor();
         
         if (gameOver) {
-            this.scene.triggerGameOver('audience');
+            this.scene.triggerGameEnd('audience');
         }
     }
     

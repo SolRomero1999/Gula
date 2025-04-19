@@ -1,15 +1,17 @@
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this.gameDurationMinutes = 5;
     }
 
     preload() {
+        //this.scene.add('GameEndScene', GameEndScene, false);
         const assets = [
             'background', 'planta', 'luces', 'desk',
             'ramen_bowl1', 'ramen_bowl2', 'ramen_bowl3','ramen_bowl4', 'ramen_bowl5', 
             'sushi1', 'sushi2', 'sushi3','sushi4', 'sushi5', 'sushi6', 'sushi7', 'sushi8','sushi9', 'sushi10', 'sushi11', 'sushi12', 
             'palillos','PortaPalillos', 
-            'streamer', 'ojosc1', 'OjosC1_02', 'pupilasc1',
+            'streamer', 'OjosC1_02', 'pupilasc1',
             'streamerG', 'OjosC1_03',
             'streamerG2', 'caragordo', 'full', 'ManosFull', 
             'streamerT', 'ojosc2', 'pupilasc2', 'streamerTG',
@@ -27,6 +29,8 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.cleanup();
+        this.gameTimer = new GameTimer(this, this.gameDurationMinutes);
+        this.gameTimer.start();
 
         this.moneyManager = new MoneyManager(this);
         this.audienceManager = new AudienceManager(this);
@@ -153,18 +157,27 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    triggerGameOver(loseType) {
-        if (this.isGameOver) return; 
+    triggerGameEnd(endType) {
+        if (this.isGameOver) return;
         
         this.isGameOver = true;
         this.input.enabled = false;
-    
+        
+        // Recolectar estadísticas completas
+        const gameStats = {
+            streamTime: this.gameTimer.getFormattedTime(),
+            peakViewers: this.audienceManager?.rating || 0,  // Usar rating actual como peak
+            subscribers: this.subscriptionManager?.subscribers || 0,
+            totalDonations: this.donationManager?.totalDonations || 0,
+            totalEarnings: this.moneyManager?.money || 0,  // Usar dinero actual
+            foodConsumed: (this.mokbanManager?.currentBowlLevel - 1) + (this.mokbanManager?.currentSushiLevel - 1),
+            endType: endType
+        };
+        
         this.cleanup();
         
-        this.scene.start('GameOverScene', {
-            loseType: loseType,
-            audienceRating: this.audienceManager?.rating || 0,
-            audienceGoal: this.audienceManager?.goal || 0
+        this.scene.start('GameOverScene', { 
+            stats: gameStats  // Asegurarse de pasar el objeto completo
         });
     }
     
