@@ -3,54 +3,57 @@ class MenuScene extends Phaser.Scene {
         super({ key: 'MenuScene' });
     }
 
+    preload() {
+        this.load.image('menubackground', 'assets/portada.jpg'); // Fondo
+        this.load.image('startButton', 'assets/startButton.png'); // Botón de iniciar
+        this.load.image('creditsButton', 'assets/creditsButton.png'); // Botón de créditos
+    }
+
     create() {
-        // Limpiar escena por si acaso
         this.children.removeAll();
 
-        // Fondo del menú
-        this.add.rectangle(
+        // Fondo con imagen
+        this.add.image(
             this.cameras.main.centerX, 
             this.cameras.main.centerY, 
-            this.cameras.main.width, 
-            this.cameras.main.height, 
-            0x333333
-        ).setOrigin(0.5);
-        
-        // Título del juego
-        this.add.text(this.cameras.main.centerX, 150, 'GULA', {
-            font: '64px Arial',
-            fill: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 6
-        }).setOrigin(0.5);
-        
-        // Botón de inicio
-        const startButton = this.add.text(
+            'menubackground'
+        ).setOrigin(0.5).setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+
+        // Botón de iniciar stream con imagen
+        const startButton = this.add.image(
             this.cameras.main.centerX, 
-            this.cameras.main.centerY, 
-            'Iniciar Stream', 
-            {
-                font: '32px Arial',
-                fill: '#ffffff',
-                backgroundColor: '#555555',
-                padding: { x: 20, y: 10 }
-            }
-        )
-        .setOrigin(0.5)
-        .setInteractive()
-        .on('pointerover', () => startButton.setBackgroundColor('#777777'))
-        .on('pointerout', () => startButton.setBackgroundColor('#555555'))
-        .on('pointerdown', () => {
+            this.cameras.main.height - 50, // Abajo con margen
+            'startButton'
+        ).setOrigin(0.5).setScale(0.5).setInteractive();
+
+        startButton.on('pointerover', () => startButton.setScale(0.55));
+        startButton.on('pointerout', () => startButton.setScale(0.5));
+        startButton.on('pointerdown', () => {
+            this.scene.stop('MenuScene');
             this.scene.start('GameScene');
         });
-        
-        // Efecto de botón
+
+        // Efecto animado tipo pulso, más sutil
         this.tweens.add({
             targets: startButton,
-            scale: 1.1,
+            scale: 0.55,
             duration: 1000,
+            ease: 'Sine.easeInOut',
             yoyo: true,
             repeat: -1
+        });
+
+        // Botón de créditos en la esquina superior derecha
+        const creditsButton = this.add.image(
+            this.cameras.main.width - 120, 
+            50, 
+            'creditsButton'
+        ).setOrigin(0.5).setScale(0.6).setInteractive();
+
+        creditsButton.on('pointerover', () => creditsButton.setScale(0.65));
+        creditsButton.on('pointerout', () => creditsButton.setScale(0.6));
+        creditsButton.on('pointerdown', () => {
+            this.scene.start('CreditsScene');
         });
     }
 
