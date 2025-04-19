@@ -9,7 +9,9 @@ class GameScene extends Phaser.Scene {
             'ramen_bowl1', 'ramen_bowl2', 'ramen_bowl3','ramen_bowl4', 'ramen_bowl5', 
             'palillos','PortaPalillos', 
             'streamer', 'ojosc1', 'OjosC1_02', 'pupilasc1',
-            'streamerT', 'ojosc2', 'pupilasc2', 'pupilasCorazon',
+            'streamerG', 'OjosC1_03',
+            'streamerG2', 'caragordo', 'full', 'ManosFull', 
+            'streamerT', 'ojosc2', 'pupilasc2', 'streamerTG',
         ];
     
         assets.forEach(asset => {
@@ -37,7 +39,7 @@ class GameScene extends Phaser.Scene {
 
         this.setupVisualElements();
         this.setupStreamerAnimation();
-        this.setupPupilTracking(); // Nueva función para el seguimiento de pupilas
+        this.setupPupilTracking();
     }
 
     setupVisualElements() {
@@ -75,12 +77,11 @@ class GameScene extends Phaser.Scene {
             this[config.key] = image;  
         });
 
-        // Guardar posición original de las pupilas para referencia
         this.pupilOriginalPosition = {
             x: this.pupilasc1.x,
             y: this.pupilasc1.y
         };
-        this.pupilMaxMovement = 8; // Máximo movimiento en píxeles desde el centro
+        this.pupilMaxMovement = 8;
     }
 
     setupStreamerAnimation() {
@@ -95,27 +96,21 @@ class GameScene extends Phaser.Scene {
     }
 
     setupPupilTracking() {
-        // Configurar seguimiento del mouse para las pupilas
         this.input.on('pointermove', (pointer) => {
             if (!this.pupilasc1 || !this.OjosC1_02) return;
             
-            // Calcular la posición relativa del mouse respecto a los ojos
             const eyeCenterX = this.OjosC1_02.x;
             const eyeCenterY = this.OjosC1_02.y;
             
-            // Distancia del mouse al centro de los ojos
             const dx = pointer.x - eyeCenterX;
             const dy = pointer.y - eyeCenterY;
             
-            // Normalizar y limitar el movimiento
             const distance = Math.min(Math.sqrt(dx * dx + dy * dy), this.pupilMaxMovement);
             const angle = Math.atan2(dy, dx);
             
-            // Nueva posición de las pupilas (movimiento circular limitado)
             const newX = this.pupilOriginalPosition.x + Math.cos(angle) * distance;
             const newY = this.pupilOriginalPosition.y + Math.sin(angle) * distance;
             
-            // Aplicar movimiento suavizado
             this.tweens.add({
                 targets: this.pupilasc1,
                 x: newX,
@@ -140,19 +135,27 @@ class GameScene extends Phaser.Scene {
         this.tweens.killAll();
         this.children.removeAll();
         
-        // Limpiar el evento de seguimiento de pupilas
         if (this.input) {
             this.input.off('pointermove');
         }
+
+        // Restaurar sprites a estado inicial
+        if (this.streamer) this.streamer.setTexture('streamer');
+        if (this.OjosC1_02) {
+            this.OjosC1_02.setTexture('OjosC1_02');
+            this.OjosC1_02.setVisible(true);
+        }
+        if (this.pupilasc1) {
+            // Restaura a pupilas normales pero asegura visibilidad
+            this.pupilasc1.setTexture('pupilasc1');
+            this.pupilasc1.setVisible(true);
+        }
     }
-
-
 
     triggerGameOver(loseType) {
         if (this.isGameOver) return; 
         
         this.isGameOver = true;
-        
         this.input.enabled = false;
     
         this.cleanup();
@@ -170,7 +173,6 @@ class GameScene extends Phaser.Scene {
             return null; 
         }
     
-        // Limpiar diálogo anterior de forma segura
         if (this.currentDialogueBox && this.currentDialogueBox.scene) {
             this.tweens.killTweensOf(this.currentDialogueBox);
             this.currentDialogueBox.destroy(true);
@@ -188,7 +190,6 @@ class GameScene extends Phaser.Scene {
             ...styleOptions
         };
     
-        // Crear elementos del diálogo
         const dialogueText = this.add.text(
             this.cameras.main.centerX,
             style.boxYPosition,
@@ -239,7 +240,6 @@ class GameScene extends Phaser.Scene {
             .add([dialogueBox, dialogueText, nameText])
             .setDepth(100);
     
-        // Configurar auto-destrucción con manejo seguro
         const destroyDialog = () => {
             if (this.currentDialogueBox && this.currentDialogueBox.scene) {
                 this.tweens.killTweensOf(this.currentDialogueBox);
@@ -248,7 +248,6 @@ class GameScene extends Phaser.Scene {
             }
         };
     
-        // Animación de desvanecimiento
         this.tweens.add({
             targets: this.currentDialogueBox,
             alpha: 0,
