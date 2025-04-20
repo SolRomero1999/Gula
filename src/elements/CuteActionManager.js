@@ -11,35 +11,46 @@ class CuteActionManager {
     }
 
     createButton() {
-        this.button = this.scene.add.rectangle(
-            this.scene.cameras.main.centerX,
-            this.scene.cameras.main.height - 60,
-            200,
-            50,
-            0xff69b4
-        ).setInteractive()
-         .setDepth(60);
+        const x = this.scene.cameras.main.centerX;
+        const y = this.scene.cameras.main.height - 60;
+
+        // Botón base redondeado
+        this.button = this.scene.add.graphics().setDepth(60);
+        this.drawGlossyButton(0xff69b4);
+
+        this.hitArea = this.scene.add.rectangle(
+            x, y, 200, 50
+        ).setInteractive({ useHandCursor: true }).setDepth(61);
 
         this.buttonText = this.scene.add.text(
-            this.scene.cameras.main.centerX,
-            this.scene.cameras.main.height - 60,
+            x, y,
             'Acting Cute',
-            {
-                font: '20px Arial',
-                fill: '#ffffff',
-                fontWeight: 'bold'
-            }
-        ).setOrigin(0.5)
-         .setDepth(61);
+            { font: '22px Arial', fill: '#ffffff', fontStyle: 'bold' }
+        ).setOrigin(0.5).setDepth(62);
 
-        this.button.on('pointerover', () => this.onButtonHover(0xff1493));
-        this.button.on('pointerout', () => this.onButtonHover(0xff69b4));
-        this.button.on('pointerdown', () => this.executeAction());
+        this.hitArea.on('pointerover', () => this.drawGlossyButton(0xff1493));
+        this.hitArea.on('pointerout', () => this.drawGlossyButton(0xff69b4));
+        this.hitArea.on('pointerdown', () => this.executeAction());
+    }
+
+    drawGlossyButton(color) {
+        const x = this.scene.cameras.main.centerX;
+        const y = this.scene.cameras.main.height - 60;
+
+        this.button.clear();
+
+        // Fondo principal redondeado
+        this.button.fillStyle(color, 1);
+        this.button.fillRoundedRect(x - 100, y - 25, 200, 50, 25);
+
+        // Brillo tipo glaseado superior
+        this.button.fillStyle(0xFFFFFF, 0.4);
+        this.button.fillRoundedRect(x - 90, y - 22, 180, 15, 15);
     }
 
     onButtonHover(color) {
         if (!this.cooldown && !this.scene.isGameOver) {
-            this.button.setFillStyle(color);
+            this.drawGlossyButton(color);
         }
     }
 
@@ -96,11 +107,11 @@ class CuteActionManager {
 
     startCooldown() {
         this.cooldown = true;
-        this.button.setFillStyle(0x888888);
-        
+        this.drawGlossyButton(0x888888); // Cambiar el color del botón al gris
+
         this.cooldownTimer = this.scene.time.delayedCall(5000, () => {
             this.cooldown = false;
-            this.button.setFillStyle(0xff69b4);
+            this.drawGlossyButton(0xff69b4); // Restaurar el color original
             this.cooldownTimer = null;
         });
     }
@@ -144,7 +155,7 @@ class CuteActionManager {
 
         // Animación del botón
         this.scene.tweens.add({
-            targets: this.button,
+            targets: this.hitArea,
             scaleX: 0.9,
             scaleY: 0.9,
             duration: 100,

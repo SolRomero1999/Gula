@@ -2,61 +2,66 @@ class MoneyManager {
     constructor(scene) {
         this.scene = scene;
         this.money = 0;
+        this.totalEarnings = 0;
 
         this.createMoneyPanel();
-        this.totalEarnings = 0; 
     }
 
     createMoneyPanel() {
-        const paddingX = 15;
-        const paddingY = 5;
-        const fontSize = 24;
-        const font = `${fontSize}px Arial`;
-        const text = `Money: $0`;
+        const paddingX = 20;
+        const paddingY = 10;
+        const fontSize = 26;
 
-        // Crear el texto sin fondo, solo con padding interno visual
-        this.moneyText = this.scene.add.text(0, 0, text, {
-            font: font,
+        this.moneyText = this.scene.add.text(0, 0, `$0`, {
+            font: `bold ${fontSize}px Arial`,
             fill: '#ffffff',
-            padding: { x: paddingX, y: paddingY }
-        }).setDepth(10);
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#000',
+                blur: 3,
+                fill: true
+            }
+        }).setDepth(11);
 
-        this.moneyText.setPosition(20, 20);
         this.moneyText.setOrigin(0, 0);
+        this.moneyText.setPosition(60, 20); // dejando espacio para el ícono
 
-        // Medir tamaño incluyendo padding visual
+        this.panel = this.scene.add.graphics().setDepth(10);
+        this.updatePanelBackground();
+
+        // Ícono ajustado ligeramente a la izquierda
+        this.coinIcon = this.scene.add.text(16, 20, '💰', {
+            font: `28px Arial`
+        }).setDepth(12);
+    }
+
+    updatePanelBackground() {
         const bounds = this.moneyText.getBounds();
-        const panelWidth = bounds.width;
-        const panelHeight = bounds.height;
+        const paddingX = 20;
+        const paddingY = 10;
 
-        // Crear el panel detrás del texto, sin borde
-        this.panel = this.scene.add.rectangle(
-            this.moneyText.x + panelWidth / 2,
-            this.moneyText.y + panelHeight / 2,
-            panelWidth,
-            panelHeight,
-            0x000000 // color negro de fondo
-        ).setDepth(9);  // detrás del texto
+        const width = bounds.width + paddingX;
+        const height = bounds.height + paddingY;
+        const x = this.moneyText.x - paddingX / 2;
+        const y = this.moneyText.y - paddingY / 2;
+
+        this.panel.clear();
+        this.panel.fillStyle(0x1e1e1e, 0.8);
+        this.panel.fillRoundedRect(x, y, width, height, 12);
+        this.panel.lineStyle(2, 0xffffff, 0.3);
+        this.panel.strokeRoundedRect(x, y, width, height, 12);
     }
 
     addMoney(amount) {
         this.money += amount;
-        this.totalEarnings += amount;  // Acumular ganancias totales
+        this.totalEarnings += amount;
         this.updateMoneyText();
     }
 
     updateMoneyText() {
-        this.moneyText.setText(`Money: $${this.money}`);
-
-        const bounds = this.moneyText.getBounds();
-        const panelWidth = bounds.width;
-        const panelHeight = bounds.height;
-
-        this.panel.setSize(panelWidth, panelHeight);
-        this.panel.setPosition(
-            this.moneyText.x + panelWidth / 2,
-            this.moneyText.y + panelHeight / 2
-        );
+        this.moneyText.setText(`$${this.money}`);
+        this.updatePanelBackground();
     }
 
     resetMoney() {
@@ -65,7 +70,8 @@ class MoneyManager {
     }
 
     cleanup() {
-        if (this.moneyText) this.moneyText.destroy();
-        if (this.panel) this.panel.destroy();
+        this.moneyText?.destroy();
+        this.panel?.destroy();
+        this.coinIcon?.destroy();
     }
 }

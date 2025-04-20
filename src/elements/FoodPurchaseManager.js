@@ -13,84 +13,90 @@ class FoodPurchaseManager {
 
     createBuyButtons() {
         // Botón para comprar Ramen (a la derecha)
-        this.ramenButton = this.scene.add.rectangle(
-            410, 
-            this.scene.cameras.main.height - 60, 
-            180,
-            50,
-            0x4CAF50 
-        )
-        .setInteractive()
-        .setDepth(60);
-        
+        this.ramenButton = this.scene.add.graphics().setDepth(60);
         this.ramenButtonText = this.scene.add.text(
             410,
             this.scene.cameras.main.height - 60,
             `Buy Ramen ($${this.ramenPrice})`,
-            {
-                font: '18px Arial',
-                fill: '#ffffff',
-                fontWeight: 'bold'
-            }
-        ).setOrigin(0.5)
-         .setDepth(61);
+            { font: '18px Arial', fill: '#ffffff', fontWeight: 'bold' }
+        ).setOrigin(0.5).setDepth(61);
+        
+        this.ramenHitArea = this.scene.add.rectangle(
+            410, 
+            this.scene.cameras.main.height - 60, 
+            180, 
+            50
+        ).setInteractive({ useHandCursor: true }).setDepth(62);
 
         // Botón para comprar Sushi (a la izquierda)
-        this.sushiButton = this.scene.add.rectangle(
-            190, 
-            this.scene.cameras.main.height - 60, 
-            180,
-            50,
-            0x2196F3 
-        )
-        .setInteractive()
-        .setDepth(60);
-        
+        this.sushiButton = this.scene.add.graphics().setDepth(60);
         this.sushiButtonText = this.scene.add.text(
             190,
             this.scene.cameras.main.height - 60,
             `Buy Sushi ($${this.sushiPrice})`,
-            {
-                font: '18px Arial',
-                fill: '#ffffff',
-                fontWeight: 'bold'
-            }
-        ).setOrigin(0.5)
-         .setDepth(61);
+            { font: '18px Arial', fill: '#ffffff', fontWeight: 'bold' }
+        ).setOrigin(0.5).setDepth(61);
+        
+        this.sushiHitArea = this.scene.add.rectangle(
+            190, 
+            this.scene.cameras.main.height - 60, 
+            180, 
+            50
+        ).setInteractive({ useHandCursor: true }).setDepth(62);
 
-        // Configurar interacciones para el botón de Ramen
+        // Dibujar los botones iniciales
+        this.drawGlossyButton(this.ramenButton, 410, 0x4CAF50);
+        this.drawGlossyButton(this.sushiButton, 190, 0x2196F3);
+
+        // Configurar interacciones
         this.setupButtonInteractions(
+            this.ramenHitArea, 
             this.ramenButton, 
-            this.ramenButtonText, 
             0x4CAF50, 
             0x388E3C, 
             () => this.buyRamen()
         );
 
-        // Configurar interacciones para el botón de Sushi
         this.setupButtonInteractions(
+            this.sushiHitArea, 
             this.sushiButton, 
-            this.sushiButtonText, 
             0x2196F3, 
             0x1976D2, 
             () => this.buySushi()
         );
     }
 
-    setupButtonInteractions(button, text, normalColor, hoverColor, callback) {
-        button.on('pointerover', () => {
+    drawGlossyButton(button, x, color) {
+        const y = this.scene.cameras.main.height - 60;
+        const width = 180;
+        const height = 50;
+        const radius = 25;
+
+        button.clear();
+
+        // Fondo principal redondeado
+        button.fillStyle(color, 1);
+        button.fillRoundedRect(x - width/2, y - height/2, width, height, radius);
+
+        // Brillo tipo glaseado superior
+        button.fillStyle(0xFFFFFF, 0.4);
+        button.fillRoundedRect(x - width/2 + 10, y - height/2 + 3, width - 20, 15, 15);
+    }
+
+    setupButtonInteractions(hitArea, button, normalColor, hoverColor, callback) {
+        hitArea.on('pointerover', () => {
             if (!this.scene.isGameOver) {
-                button.setFillStyle(hoverColor); 
+                this.drawGlossyButton(button, hitArea.x, hoverColor);
             }
         });
         
-        button.on('pointerout', () => {
+        hitArea.on('pointerout', () => {
             if (!this.scene.isGameOver) {
-                button.setFillStyle(normalColor); 
+                this.drawGlossyButton(button, hitArea.x, normalColor);
             }
         });
         
-        button.on('pointerdown', () => {
+        hitArea.on('pointerdown', () => {
             if (!this.scene.isGameOver) {
                 callback();
             }
@@ -102,7 +108,7 @@ class FoodPurchaseManager {
             this.moneyManager.addMoney(-this.ramenPrice);
             this.mokbanManager.resetBowlLevel();
 
-            this.animateButton(this.ramenButton, this.ramenButtonText);
+            this.animateButton(this.ramenHitArea, this.ramenButtonText);
             
             this.scene.addDialogueBox("Ramen restocked!", "System", {
                 textColor: '#ffffff',
@@ -111,7 +117,7 @@ class FoodPurchaseManager {
                 borderThickness: 2
             });
         } else {
-            this.showNotEnoughMoney(this.ramenButton, this.ramenButtonText);
+            this.showNotEnoughMoney(this.ramenHitArea, this.ramenButtonText);
         }
     }
 
@@ -120,7 +126,7 @@ class FoodPurchaseManager {
             this.moneyManager.addMoney(-this.sushiPrice);
             this.mokbanManager.resetSushiLevel();
 
-            this.animateButton(this.sushiButton, this.sushiButtonText);
+            this.animateButton(this.sushiHitArea, this.sushiButtonText);
             
             this.scene.addDialogueBox("Sushi restocked!", "System", {
                 textColor: '#ffffff',
@@ -129,13 +135,13 @@ class FoodPurchaseManager {
                 borderThickness: 2
             });
         } else {
-            this.showNotEnoughMoney(this.sushiButton, this.sushiButtonText);
+            this.showNotEnoughMoney(this.sushiHitArea, this.sushiButtonText);
         }
     }
 
-    animateButton(button, text) {
+    animateButton(hitArea, text) {
         this.scene.tweens.add({
-            targets: [button, text],
+            targets: [hitArea, text],
             scaleX: 1.1,
             scaleY: 1.1,
             duration: 100,
@@ -143,12 +149,25 @@ class FoodPurchaseManager {
         });
     }
 
-    showNotEnoughMoney(button, text) {
+    showNotEnoughMoney(hitArea, text) {
+        // Cambiar temporalmente el color a rojo
+        const originalColor = hitArea === this.ramenHitArea ? 0x4CAF50 : 0x2196F3;
+        const button = hitArea === this.ramenHitArea ? this.ramenButton : this.sushiButton;
+        const x = hitArea.x;
+        
+        this.drawGlossyButton(button, x, 0xff0000);
+        
         this.scene.tweens.add({
-            targets: [button, text],
+            targets: text,
             tint: 0xff0000,
             duration: 300,
             yoyo: true
+        });
+        
+        this.scene.time.delayedCall(500, () => {
+            if (!this.scene.isGameOver) {
+                this.drawGlossyButton(button, x, originalColor);
+            }
         });
         
         this.scene.addDialogueBox("Not enough money!", "System", {
@@ -161,7 +180,9 @@ class FoodPurchaseManager {
     cleanup() {
         if (this.ramenButton) this.ramenButton.destroy();
         if (this.ramenButtonText) this.ramenButtonText.destroy();
+        if (this.ramenHitArea) this.ramenHitArea.destroy();
         if (this.sushiButton) this.sushiButton.destroy();
         if (this.sushiButtonText) this.sushiButtonText.destroy();
+        if (this.sushiHitArea) this.sushiHitArea.destroy();
     }
 }

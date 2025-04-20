@@ -79,9 +79,13 @@ class GameOverScene extends Phaser.Scene {
                 title: 'STREAM COMPLETED!',
                 subtitle: 'You finished your stream successfully',
                 color: '#55FF55'
+            },
+            manual: {
+                title: 'STREAM ENDED!',
+                subtitle: 'You manually ended the stream',
+                color: '#FFAA55'
             }
         };
-
         const message = endMessages[this.endType] || endMessages.time;
 
         const titleText = this.add.text(0, currentY, message.title, {
