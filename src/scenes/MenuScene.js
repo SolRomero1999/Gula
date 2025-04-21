@@ -30,7 +30,7 @@ class MenuScene extends Phaser.Scene {
         startButton.on('pointerout', () => startButton.setScale(0.5));
         startButton.on('pointerdown', () => {
             this.scene.stop('MenuScene');
-            this.scene.start('GameScene');
+            this.scene.start('TutorialScene');
         });
 
         // Efecto animado tipo pulso, más sutil

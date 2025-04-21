@@ -11,42 +11,46 @@ class CuteActionManager {
     }
 
     createButton() {
-        const x = this.scene.cameras.main.centerX;
-        const y = this.scene.cameras.main.height - 60;
-
+        const x = this.scene.cameras.main.centerX; // Centro de la cámara horizontal
+        const y = this.scene.cameras.main.height - 60; // Altura menos 60 píxeles
+    
         // Botón base redondeado
         this.button = this.scene.add.graphics().setDepth(60);
         this.drawGlossyButton(0xff69b4);
-
+    
+        // Asegurarse de que el área de interacción esté centrada correctamente
         this.hitArea = this.scene.add.rectangle(
-            x, y, 200, 50
+            x, y, 180, 50
         ).setInteractive({ useHandCursor: true }).setDepth(61);
-
+    
+        // Asegurarse de que el texto esté centrado dentro del botón
         this.buttonText = this.scene.add.text(
             x, y,
             'Acting Cute',
-            { font: '22px Arial', fill: '#ffffff', fontStyle: 'bold' }
-        ).setOrigin(0.5).setDepth(62);
-
+            { font: '18px Arial', fill: '#ffffff', fontStyle: 'bold' }
+        ).setOrigin(0.5).setDepth(62); // setOrigin(0.5) centra el texto
+    
+        // Eventos de interacción
         this.hitArea.on('pointerover', () => this.drawGlossyButton(0xff1493));
         this.hitArea.on('pointerout', () => this.drawGlossyButton(0xff69b4));
         this.hitArea.on('pointerdown', () => this.executeAction());
     }
-
+    
     drawGlossyButton(color) {
         const x = this.scene.cameras.main.centerX;
         const y = this.scene.cameras.main.height - 60;
-
+    
         this.button.clear();
-
+    
         // Fondo principal redondeado
         this.button.fillStyle(color, 1);
-        this.button.fillRoundedRect(x - 100, y - 25, 200, 50, 25);
-
+        this.button.fillRoundedRect(x - 90, y - 25, 180, 50, 25); // Asegúrate de que la posición x se ajuste para centrarlo
+    
         // Brillo tipo glaseado superior
         this.button.fillStyle(0xFFFFFF, 0.4);
-        this.button.fillRoundedRect(x - 90, y - 22, 180, 15, 15);
+        this.button.fillRoundedRect(x - 80, y - 22, 160, 15, 15); // Ajusta también el brillo
     }
+    
 
     onButtonHover(color) {
         if (!this.cooldown && !this.scene.isGameOver) {

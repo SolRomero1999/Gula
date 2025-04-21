@@ -11,68 +11,68 @@ class BotManager {
     }
 
     createBuyButton() {
-        const x = this.scene.cameras.main.width - 400;
+        const x = this.scene.cameras.main.width - 440;
         const y = this.scene.cameras.main.height - 60;
-
+        const buttonWidth = 180;
+        const buttonHeight = 50;
+    
         // Botón base redondeado (estilo glossy)
         this.buyButton = this.scene.add.graphics().setDepth(60);
-        this.drawGlossyButton(x, 0x9C27B0); // Morado para bots
-        
+        this.drawGlossyButton(this.buyButton, x, 0x9C27B0, buttonWidth, buttonHeight);  // Morado para bots
+    
         this.buttonText = this.scene.add.text(
             x,
             y,
             `Buy Bots ($${this.botPrice})`,
             {
-                font: '20px Arial',
+                font: '18px Arial',
                 fill: '#ffffff',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                align: 'center'
             }
-        ).setOrigin(0.5).setDepth(62);
-
+        ).setOrigin(0.5).setDepth(61);
+    
         // Área de interacción
         this.hitArea = this.scene.add.rectangle(
             x, 
             y, 
-            200, 
-            50
-        ).setInteractive({ useHandCursor: true }).setDepth(61);
-
+            buttonWidth, 
+            buttonHeight
+        ).setInteractive({ useHandCursor: true }).setDepth(62);
+    
         // Efectos hover
         this.hitArea.on('pointerover', () => {
             if (!this.scene.isGameOver) {
-                this.drawGlossyButton(x, 0x7B1FA2); // Morado más oscuro
+                this.drawGlossyButton(this.buyButton, x, 0x7B1FA2, buttonWidth, buttonHeight); // Morado más oscuro
             }
         });
-        
+    
         this.hitArea.on('pointerout', () => {
             if (!this.scene.isGameOver) {
-                this.drawGlossyButton(x, 0x9C27B0); // Morado original
+                this.drawGlossyButton(this.buyButton, x, 0x9C27B0, buttonWidth, buttonHeight); // Morado original
             }
         });
-        
+    
         this.hitArea.on('pointerdown', () => {
             if (!this.scene.isGameOver) {
                 this.buyBots();
             }
         });
     }
-
-    drawGlossyButton(x, color) {
+    
+    drawGlossyButton(button, x, color, width = 180, height = 50) {
         const y = this.scene.cameras.main.height - 60;
-        const width = 200;
-        const height = 50;
         const radius = 25;
-
-        this.buyButton.clear();
-
-        // Fondo principal redondeado
-        this.buyButton.fillStyle(color, 1);
-        this.buyButton.fillRoundedRect(x - width/2, y - height/2, width, height, radius);
-
-        // Brillo tipo glaseado superior
-        this.buyButton.fillStyle(0xFFFFFF, 0.4);
-        this.buyButton.fillRoundedRect(x - width/2 + 10, y - height/2 + 3, width - 20, 15, 15);
+    
+        button.clear();
+        // Fondo principal
+        button.fillStyle(color, 1);
+        button.fillRoundedRect(x - width / 2, y - height / 2, width, height, radius);
+        // Efecto glossy
+        button.fillStyle(0xFFFFFF, 0.4);
+        button.fillRoundedRect(x - width / 2 + 10, y - height / 2 + 3, width - 20, 15, 15);
     }
+    
 
     buyBots() {
         if (this.moneyManager.money >= this.botPrice) {
@@ -85,7 +85,7 @@ class BotManager {
                 this.botsAddedSuccessfully();
             }
         } else {
-            this.showNotEnoughMoney();
+            this.showNotEnoughMoney()
         }
     }
 
@@ -164,10 +164,10 @@ class BotManager {
     }
 
     showNotEnoughMoney() {
-        const x = this.scene.cameras.main.width - 400;
+        const x = this.hitArea.x;
         
         // Cambiar a rojo temporalmente
-        this.drawGlossyButton(x, 0xff0000);
+        this.drawGlossyButton(this.buyButton, x, 0xff0000);
         
         this.scene.tweens.add({
             targets: [this.buttonText],
@@ -176,17 +176,18 @@ class BotManager {
             yoyo: true
         });
         
-        // Restaurar después de 500ms
-        this.scene.time.delayedCall(500, () => {
-            if (!this.scene.isGameOver) {
-                this.drawGlossyButton(x, 0x9C27B0);
-            }
-        });
-        
+        // Mostrar mensaje de diálogo - CORRECCIÓN PRINCIPAL
         this.scene.addDialogueBox("Not enough money!", "System", {
             textColor: '#ff0000',
             boxColor: 0x000000,
             borderColor: 0xff0000
+        });
+        
+        // Restaurar después de 500ms
+        this.scene.time.delayedCall(500, () => {
+            if (!this.scene.isGameOver) {
+                this.drawGlossyButton(this.buyButton, x, 0x9C27B0);
+            }
         });
     }
 

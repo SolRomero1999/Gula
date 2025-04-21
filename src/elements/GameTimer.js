@@ -25,14 +25,13 @@ class GameTimer {
         .setOrigin(1, 0)
         .setDepth(50);
 
-        // Crear área interactiva solo para el emoji rojo
+        // Crear zona interactiva que cubre todo el texto
         const textBounds = this.liveText.getBounds();
-        const emojiWidth = 24; // Ancho aproximado del emoji
-        
+
         this.liveButton = this.scene.add.zone(
-            textBounds.right - emojiWidth - 15, // Posición X (ajustada para el emoji)
-            textBounds.top + textBounds.height/2, // Posición Y (centro vertical)
-            emojiWidth,
+            textBounds.centerX,
+            textBounds.centerY,
+            textBounds.width,
             textBounds.height
         )
         .setOrigin(0.5)
@@ -42,14 +41,14 @@ class GameTimer {
                 this.scene.triggerGameEnd('manual');
             }
         });
-        
-        // Efecto hover
+
+        // Efecto hover sobre toda el área
         this.liveButton.on('pointerover', () => {
             if (!this.scene.isGameOver) {
                 this.liveText.setStyle({ fill: '#ff5555' });
             }
         });
-        
+
         this.liveButton.on('pointerout', () => {
             if (!this.scene.isGameOver) {
                 this.liveText.setStyle({ fill: '#ffffff' });
@@ -59,6 +58,7 @@ class GameTimer {
 
     start() {
         this.startTime = this.scene.time.now;
+        this.elapsedTime = 0;
         this.isRunning = true;
         this.timeUpTriggered = false;
         this.updateTimer();
@@ -67,11 +67,17 @@ class GameTimer {
     updateTimer() {
         if (!this.isRunning) return;
 
+        // Calcular tiempo transcurrido exacto
         this.elapsedTime = this.scene.time.now - this.startTime;
         const remaining = Math.max(0, this.duration - this.elapsedTime);
 
-        // Actualizar texto manteniendo el formato LIVE
+        // Actualizar display
         this.liveText.setText(`🔴 LIVE ${this.formatTime(remaining)}`);
+
+        // Actualizar área interactiva
+        const bounds = this.liveText.getBounds();
+        this.liveButton.setPosition(bounds.centerX, bounds.centerY);
+        this.liveButton.setSize(bounds.width, bounds.height);
 
         // Cambiar color cuando quedan 30 segundos
         if (remaining <= 30000 && remaining > 0) {
@@ -81,7 +87,9 @@ class GameTimer {
         if (remaining <= 0 && !this.timeUpTriggered) {
             this.timeUp();
         } else {
-            this.scene.time.delayedCall(1000, () => this.updateTimer(), [], this);
+            // Programar próxima actualización para el próximo segundo exacto
+            const nextUpdate = 1000 - (this.elapsedTime % 1000);
+            this.scene.time.delayedCall(nextUpdate, () => this.updateTimer(), [], this);
         }
     }
 
@@ -108,3 +116,4 @@ class GameTimer {
         this.liveButton?.destroy();
     }
 }
+
