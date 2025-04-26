@@ -2,30 +2,35 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <!-- Esto hace que todas las rutas relativas partan de donde esté index.html -->
+    <base href="./">
+
     <title>GULA</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-    <script src="./src/config.js"></script>
 
-    <script src="./src/scenes/MenuScene.js"></script>
-    <script src="./src/scenes/TutorialScene.js"></script>
-    <script src="./src/scenes/GameScene.js"></script>
-    <script src="./src/scenes/GameOverScene.js"></script>
-    <script src="./src/scenes/CreditsScene.js"></script>
+    <!-- Rutas relativas limpias, sin "./" ni "../" -->
+    <script src="src/config.js"></script>
 
-    <script src="./src/elements/ChatSystem.js"></script>
-    <script src="./src/elements/MessageGenerator.js"></script>
-    <script src="./src/elements/UserGenerator.js"></script>
-    <script src="./src/elements/CuteActionManager.js"></script>
-    <script src="./src/elements/AudienceManager.js"></script>
-    <script src="./src/elements/MokbanManager.js"></script>
-    <script src="./src/elements/SubscriptionManager.js"></script>
-    <script src="./src/elements/DonationManager.js"></script>
-    <script src="./src/elements/MoneyManager.js"></script>
-    <script src="./src/elements/FoodPurchaseManager.js"></script>
-    <script src="./src/elements/BotManager.js"></script>
-    <script src="./src/elements/GameTimer.js"></script>
+    <script src="src/scenes/MenuScene.js"></script>
+    <script src="src/scenes/TutorialScene.js"></script>
+    <script src="src/scenes/GameScene.js"></script>
+    <script src="src/scenes/GameOverScene.js"></script>
+    <script src="src/scenes/CreditsScene.js"></script>
 
-    <script src="./src/game.js"></script>
+    <script src="src/elements/ChatSystem.js"></script>
+    <script src="src/elements/MessageGenerator.js"></script>
+    <script src="src/elements/UserGenerator.js"></script>
+    <script src="src/elements/CuteActionManager.js"></script>
+    <script src="src/elements/AudienceManager.js"></script>
+    <script src="src/elements/MokbanManager.js"></script>
+    <script src="src/elements/SubscriptionManager.js"></script>
+    <script src="src/elements/DonationManager.js"></script>
+    <script src="src/elements/MoneyManager.js"></script>
+    <script src="src/elements/FoodPurchaseManager.js"></script>
+    <script src="src/elements/BotManager.js"></script>
+    <script src="src/elements/GameTimer.js"></script>
+
+    <script src="src/game.js"></script>
     <style>
         body {
             margin: 0;
@@ -37,7 +42,6 @@
             overflow: hidden;
             background-color: #222;
         }
-        
         #game-container {
             max-width: 100%;
             max-height: 100%;

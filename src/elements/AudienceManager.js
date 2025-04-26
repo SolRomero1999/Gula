@@ -34,14 +34,12 @@ class AudienceManager {
         const x = this.scene.cameras.main.centerX - width / 2;
         const y = 20;
 
-        // Fondo tipo tarjeta
         this.panel.clear();
         this.panel.fillStyle(0x9147ff, 0.8);
         this.panel.fillRoundedRect(x, y, width, height, 12);
         this.panel.lineStyle(2, 0xffffff, 0.3);
         this.panel.strokeRoundedRect(x, y, width, height, 12);
 
-        // Posición de texto e ícono
         this.icon.setPosition(x + 15, y + paddingY);
         this.goalText.setPosition(this.icon.x + 35, y + paddingY);
     }
@@ -71,7 +69,6 @@ class AudienceManager {
 
         if (this.rating >= this.goal) this.updateGoal();
 
-        // Efecto sutil cuando sube
         if (amount > 0) {
             this.scene.tweens.add({
                 targets: [this.goalText, this.icon],
@@ -96,8 +93,7 @@ class AudienceManager {
 
     showGoalReachedEffect(oldGoal, newGoal) {
         const y = this.goalText.getBounds().bottom + 10;
-        const msg = `🎯 ¡Meta de ${oldGoal} alcanzada!\nNueva meta: ${newGoal}`;
-
+        const msg = `🎯 Goal of ${oldGoal} reached!\nNew goal: ${newGoal}`;
         const congratsText = this.scene.add.text(
             this.scene.cameras.main.centerX, y, msg, {
                 font: 'bold 24px Arial',
@@ -132,4 +128,3 @@ class AudienceManager {
         this.audienceTimer?.destroy();
     }
 }
-

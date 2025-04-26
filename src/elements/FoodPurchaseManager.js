@@ -3,11 +3,8 @@ class FoodPurchaseManager {
         this.scene = scene;
         this.moneyManager = moneyManager;
         this.mokbanManager = mokbanManager;
-        
-        // Precios de los alimentos
         this.ramenPrice = 50;
         this.sushiPrice = 200;
-        
         this.createBuyButtons();
     }
 
@@ -15,8 +12,7 @@ class FoodPurchaseManager {
         const y = this.scene.cameras.main.height - 60;
         const width = 180;
         const height = 50;
-    
-        // --- Sushi Button ---
+ 
         this.sushiButton = this.scene.add.graphics().setDepth(60);
         this.sushiButtonText = this.scene.add.text(
             240,
@@ -37,12 +33,11 @@ class FoodPurchaseManager {
         this.setupButtonInteractions(
             this.sushiHitArea,
             this.sushiButton,
-            0x2196F3,  // Color normal
-            0x1976D2,  // Hover
+            0x2196F3,  
+            0x1976D2,  
             () => this.buySushi()
         );
-    
-        // --- Ramen Button ---
+
         this.ramenButton = this.scene.add.graphics().setDepth(60);
         this.ramenButtonText = this.scene.add.text(
             440,
@@ -63,8 +58,8 @@ class FoodPurchaseManager {
         this.setupButtonInteractions(
             this.ramenHitArea,
             this.ramenButton,
-            0x4CAF50,  // Color normal
-            0x388E3C,  // Hover
+            0x4CAF50,  
+            0x388E3C,  
             () => this.buyRamen()
         );
     }
@@ -149,7 +144,6 @@ class FoodPurchaseManager {
     }
 
     showNotEnoughMoney(hitArea, text) {
-        // Cambiar temporalmente el color a rojo
         const originalColor = hitArea === this.ramenHitArea ? 0x4CAF50 : 0x2196F3;
         const button = hitArea === this.ramenHitArea ? this.ramenButton : this.sushiButton;
         const x = hitArea.x;

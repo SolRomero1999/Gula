@@ -5,21 +5,7 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        //this.scene.add('GameEndScene', GameEndScene, false);
-        const assets = [
-            'background', 'planta', 'luces', 'desk',
-            'ramen_bowl1', 'ramen_bowl2', 'ramen_bowl3','ramen_bowl4', 'ramen_bowl5', 
-            'sushi1', 'sushi2', 'sushi3','sushi4', 'sushi5', 'sushi6', 'sushi7', 'sushi8','sushi9', 'sushi10', 'sushi11', 'sushi12', 
-            'palillos','PortaPalillos', 
-            'streamer', 'OjosC1_02', 'pupilasc1',
-            'streamerG', 'OjosC1_03',
-            'streamerG2', 'caragordo', 'full', 'ManosFull', 
-            'streamerT', 'ojosc2', 'pupilasc2', 'streamerTG',
-        ];
-    
-        assets.forEach(asset => {
-            this.load.image(asset, `../assets/${asset}.png`);
-        });
+
     }
     
     init() {
@@ -28,6 +14,9 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        this.sound.stopAll();
+        this.music = this.sound.add('game', { loop: true });
+        this.music.play();
         this.cleanup();
         this.gameTimer = new GameTimer(this, this.gameDurationMinutes);
         this.gameTimer.start();
@@ -57,10 +46,10 @@ class GameScene extends Phaser.Scene {
             { key: 'luces', depth: 1, size: fullSize },
             { key: 'planta', depth: 1, size: fullSize },
             { key: 'streamer', depth: 5, scale: 0.7 },
-            { key: 'OjosC1_02', depth: 6, scale: 0.7 },
-            { key: 'pupilasc1', depth: 7, scale: 0.7 },
+            { key: 'ojosc_cc', depth: 6, scale: 0.7 }, 
+            { key: 'pupilasc', depth: 7, scale: 0.7 },
             { key: 'desk', depth: 10, scale: 0.8 },
-            { key: 'PortaPalillos', depth: 11, yOffset: -100, scale: 0.8 },
+            { key: 'portapalillos', depth: 11, yOffset: -100, scale: 0.8 },
             { key: 'palillos', depth: 12, yOffset: -100, scale: 0.8 }
         ];
     
@@ -83,8 +72,8 @@ class GameScene extends Phaser.Scene {
         });
 
         this.pupilOriginalPosition = {
-            x: this.pupilasc1.x,
-            y: this.pupilasc1.y
+            x: this.pupilasc.x,
+            y: this.pupilasc.y
         };
         this.pupilMaxMovement = 8;
     }
@@ -102,10 +91,10 @@ class GameScene extends Phaser.Scene {
 
     setupPupilTracking() {
         this.input.on('pointermove', (pointer) => {
-            if (!this.pupilasc1 || !this.OjosC1_02) return;
+            if (!this.pupilasc || !this.ojosc_cc) return;
             
-            const eyeCenterX = this.OjosC1_02.x;
-            const eyeCenterY = this.OjosC1_02.y;
+            const eyeCenterX = this.ojosc_cc.x;
+            const eyeCenterY = this.ojosc_cc.y;
             
             const dx = pointer.x - eyeCenterX;
             const dy = pointer.y - eyeCenterY;
@@ -117,7 +106,7 @@ class GameScene extends Phaser.Scene {
             const newY = this.pupilOriginalPosition.y + Math.sin(angle) * distance;
             
             this.tweens.add({
-                targets: this.pupilasc1,
+                targets: this.pupilasc,
                 x: newX,
                 y: newY,
                 duration: 100,
@@ -144,16 +133,14 @@ class GameScene extends Phaser.Scene {
             this.input.off('pointermove');
         }
 
-        // Restaurar sprites a estado inicial
         if (this.streamer) this.streamer.setTexture('streamer');
-        if (this.OjosC1_02) {
-            this.OjosC1_02.setTexture('OjosC1_02');
-            this.OjosC1_02.setVisible(true);
+        if (this.ojosc_cc) {
+            this.ojosc_cc.setTexture('ojosc_cc');  
+            this.ojosc_cc.setVisible(true);
         }
-        if (this.pupilasc1) {
-            // Restaura a pupilas normales pero asegura visibilidad
-            this.pupilasc1.setTexture('pupilasc1');
-            this.pupilasc1.setVisible(true);
+        if (this.pupilasc) {
+            this.pupilasc.setTexture('pupilasc');
+            this.pupilasc.setVisible(true);
         }
     }
 
@@ -163,13 +150,12 @@ class GameScene extends Phaser.Scene {
         this.isGameOver = true;
         this.input.enabled = false;
         
-        // Recolectar estadísticas completas
         const gameStats = {
             streamTime: this.gameTimer.getFormattedTime(),
-            peakViewers: this.audienceManager?.rating || 0,  // Usar rating actual como peak
+            peakViewers: this.audienceManager?.rating || 0, 
             subscribers: this.subscriptionManager?.subscribers || 0,
             totalDonations: this.donationManager?.totalDonations || 0,
-            totalEarnings: this.moneyManager?.money || 0,  // Usar dinero actual
+            totalEarnings: this.moneyManager?.money || 0,  
             foodConsumed: (this.mokbanManager?.currentBowlLevel - 1) + (this.mokbanManager?.currentSushiLevel - 1),
             endType: endType
         };
@@ -177,7 +163,7 @@ class GameScene extends Phaser.Scene {
         this.cleanup();
         
         this.scene.start('GameOverScene', { 
-            stats: gameStats  // Asegurarse de pasar el objeto completo
+            stats: gameStats  
         });
     }
     

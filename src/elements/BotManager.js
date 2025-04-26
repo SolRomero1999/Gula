@@ -15,10 +15,9 @@ class BotManager {
         const y = this.scene.cameras.main.height - 60;
         const buttonWidth = 180;
         const buttonHeight = 50;
-    
-        // Botón base redondeado (estilo glossy)
+
         this.buyButton = this.scene.add.graphics().setDepth(60);
-        this.drawGlossyButton(this.buyButton, x, 0x9C27B0, buttonWidth, buttonHeight);  // Morado para bots
+        this.drawGlossyButton(this.buyButton, x, 0x9C27B0, buttonWidth, buttonHeight);  
     
         this.buttonText = this.scene.add.text(
             x,
@@ -31,8 +30,7 @@ class BotManager {
                 align: 'center'
             }
         ).setOrigin(0.5).setDepth(61);
-    
-        // Área de interacción
+
         this.hitArea = this.scene.add.rectangle(
             x, 
             y, 
@@ -43,13 +41,13 @@ class BotManager {
         // Efectos hover
         this.hitArea.on('pointerover', () => {
             if (!this.scene.isGameOver) {
-                this.drawGlossyButton(this.buyButton, x, 0x7B1FA2, buttonWidth, buttonHeight); // Morado más oscuro
+                this.drawGlossyButton(this.buyButton, x, 0x7B1FA2, buttonWidth, buttonHeight); 
             }
         });
     
         this.hitArea.on('pointerout', () => {
             if (!this.scene.isGameOver) {
-                this.drawGlossyButton(this.buyButton, x, 0x9C27B0, buttonWidth, buttonHeight); // Morado original
+                this.drawGlossyButton(this.buyButton, x, 0x9C27B0, buttonWidth, buttonHeight); 
             }
         });
     
@@ -65,10 +63,8 @@ class BotManager {
         const radius = 25;
     
         button.clear();
-        // Fondo principal
         button.fillStyle(color, 1);
         button.fillRoundedRect(x - width / 2, y - height / 2, width, height, radius);
-        // Efecto glossy
         button.fillStyle(0xFFFFFF, 0.4);
         button.fillRoundedRect(x - width / 2 + 10, y - height / 2 + 3, width - 20, 15, 15);
     }
@@ -77,8 +73,7 @@ class BotManager {
     buyBots() {
         if (this.moneyManager.money >= this.botPrice) {
             this.moneyManager.addMoney(-this.botPrice);
-            
-            // 30% de chance de que los suscriptores se den cuenta
+
             if (Math.random() < 0.3) {
                 this.botsDiscovered();
             } else {
@@ -90,12 +85,10 @@ class BotManager {
     }
 
     botsAddedSuccessfully() {
-        // Añadir bots normalmente
         const addedBots = 100;
         this.botCount += addedBots;
         this.audienceManager.changeRating(addedBots);
         
-        // Efectos visuales
         this.scene.tweens.add({
             targets: [this.hitArea, this.buttonText],
             scaleX: 1.1,
@@ -111,22 +104,19 @@ class BotManager {
             borderThickness: 2
         });
         
-        // Mensaje de chat aleatorio de bot
         const botMessages = MessageGenerator.getBotMessages();
         this.chatSystem.addSpecialMessage(
             `Bot_${Math.floor(Math.random() * 1000)}`,
             botMessages[Math.floor(Math.random() * botMessages.length)],
-            '#888888' // Color gris para bots
+            '#888888' 
         );
     }
 
     botsDiscovered() {
-        // Penalización por bots descubiertos
         const penalty = -200;
         this.audienceManager.changeRating(penalty);
         this.botCount = Math.max(0, this.botCount - 100);
-        
-        // Efectos visuales (cambiar a rojo temporalmente)
+
         const x = this.scene.cameras.main.width - 400;
         this.drawGlossyButton(x, 0xff0000);
         
@@ -139,7 +129,6 @@ class BotManager {
         
         this.scene.cameras.main.shake(300, 0.02);
         
-        // Restaurar color después de 500ms
         this.scene.time.delayedCall(500, () => {
             if (!this.scene.isGameOver) {
                 this.drawGlossyButton(x, 0x9C27B0);
@@ -152,7 +141,6 @@ class BotManager {
             borderColor: 0xff0000
         });
         
-        // Añadir varios mensajes de chat enfadados
         const angryMessages = MessageGenerator.getBotDiscoveredMessages();
         for (let i = 0; i < 3; i++) {
             this.chatSystem.addSpecialMessage(
@@ -166,7 +154,6 @@ class BotManager {
     showNotEnoughMoney() {
         const x = this.hitArea.x;
         
-        // Cambiar a rojo temporalmente
         this.drawGlossyButton(this.buyButton, x, 0xff0000);
         
         this.scene.tweens.add({
@@ -175,15 +162,13 @@ class BotManager {
             duration: 300,
             yoyo: true
         });
-        
-        // Mostrar mensaje de diálogo - CORRECCIÓN PRINCIPAL
+
         this.scene.addDialogueBox("Not enough money!", "System", {
             textColor: '#ff0000',
             boxColor: 0x000000,
             borderColor: 0xff0000
         });
-        
-        // Restaurar después de 500ms
+
         this.scene.time.delayedCall(500, () => {
             if (!this.scene.isGameOver) {
                 this.drawGlossyButton(this.buyButton, x, 0x9C27B0);

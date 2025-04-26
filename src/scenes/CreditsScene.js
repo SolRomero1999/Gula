@@ -4,12 +4,7 @@ class CreditsScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('streamerCredits', 'assets/streamerT.png');
-        this.load.image('ojosCredits', 'assets/ojosc2.png');
-        this.load.image('pupilasCredits', 'assets/pupilasc2.png');
-        this.load.image('topImage', 'assets/topImage.png');
-        this.load.image('background', 'assets/background.png');
-        this.load.image('twitterLogo', 'assets/twitterLogo.png');  // <- Tu imagen que redirigirá al Twitter
+
     }
 
     create() {
@@ -18,7 +13,7 @@ class CreditsScene extends Phaser.Scene {
         this.add.image(
             this.cameras.main.centerX,
             this.cameras.main.centerY,
-            'background'
+            'backgroundc'
         ).setOrigin(0.5).setDepth(-1).setDisplaySize(this.cameras.main.width, this.cameras.main.height);
 
         this.add.rectangle(
@@ -35,14 +30,14 @@ class CreditsScene extends Phaser.Scene {
         const streamerX = this.cameras.main.width - 300;
         const streamerY = this.cameras.main.centerY + 100;
 
-        this.add.image(streamerX, streamerY, 'streamerCredits').setOrigin(0.5).setScale(scale).setDepth(12);
-        this.add.image(streamerX, streamerY, 'ojosCredits').setOrigin(0.5).setScale(scale).setDepth(13);
-        this.add.image(streamerX, streamerY, 'pupilasCredits').setOrigin(0.5).setScale(scale).setDepth(14);
+        this.add.image(streamerX, streamerY, 'streamercredits').setOrigin(0.5).setScale(scale).setDepth(12);
+        this.add.image(streamerX, streamerY, 'ojoscredits').setOrigin(0.5).setScale(scale).setDepth(13);
+        this.add.image(streamerX, streamerY, 'pupilascredits').setOrigin(0.5).setScale(scale).setDepth(14);
 
         this.add.image(
             this.cameras.main.centerX,
             80,
-            'topImage'
+            'topimage'
         ).setOrigin(0.5, 0).setScale(0.3).setDepth(11);
 
         const panelX = 450;
@@ -125,11 +120,10 @@ class CreditsScene extends Phaser.Scene {
             currentY += 20;
         });
 
-        // Imagen interactiva para Twitter encima del botón
         const twitterButton = this.add.image(
             this.cameras.main.centerX,
-            this.cameras.main.height - 120,  // encima del back button
-            'twitterLogo'
+            this.cameras.main.height - 120, 
+            'twitterlogo'
         ).setOrigin(0.5).setScale(0.3).setInteractive({ useHandCursor: true }).setDepth(20);
 
         twitterButton.on('pointerdown', () => window.open('https://x.com/RosemaryTeamJam', '_blank'));
@@ -155,5 +149,3 @@ class CreditsScene extends Phaser.Scene {
         backButton.on('pointerdown', () => this.scene.start('MenuScene'));
     }
 }
-
-

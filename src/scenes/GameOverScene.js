@@ -3,7 +3,7 @@ class GameOverScene extends Phaser.Scene {
         super({ key: 'GameOverScene' });
         this.storageKey = 'streamerStats';
         this.bestStats = {
-            streamTime: 0, // En segundos
+            streamTime: 0, 
             peakViewers: 0,
             subscribers: 0,
             totalDonations: 0,
@@ -13,8 +13,12 @@ class GameOverScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', '../assets/background.png');
-        this.load.image('star', '../assets/star.png');
+        this.load.image('backgroundc', 'assets/backgroundC.png');
+        this.load.image('bueno', 'assets/bueno.jpg');
+        this.load.image('enfermo', 'assets/enfermo.jpg');
+        this.load.image('triste', 'assets/triste.jpg');
+        this.load.image('star', 'assets/star.png');
+        this.load.audio('end', 'assets/End.mp3');
     }
 
     init(data) {
@@ -26,198 +30,231 @@ class GameOverScene extends Phaser.Scene {
     }
 
     create() {
-        // Fondo más vibrante
-        this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'background')
+        this.sound.stopAll();
+        this.music = this.sound.add('end', { loop: true });
+        this.music.play();
+
+        let backgroundKey;
+        switch(this.endType) {
+            case 'stomach':
+                backgroundKey = 'enfermo';
+                break;
+            case 'audience':
+                backgroundKey = 'triste';
+                break;
+            case 'time':
+                backgroundKey = 'bueno';
+                break;
+            case 'manual':
+                backgroundKey = 'backgroundc';
+                break;
+            default:
+                backgroundKey = 'backgroundc';
+        }
+    
+        this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, backgroundKey)
             .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
             .setDepth(0);
-        
-        // Overlay menos oscuro
-        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.4)
-            .setOrigin(0)
-            .setDepth(1);
 
-        // Panel principal (no ocupa toda la pantalla)
-        const panelWidth = this.cameras.main.width * 0.8;
-        const panelHeight = this.cameras.main.height * 0.8;
-        this.add.rectangle(
-            this.cameras.main.centerX, 
-            this.cameras.main.centerY, 
-            panelWidth, 
-            panelHeight, 
-            0x1A1A1A, 
-            0.9
-        ).setDepth(2);
+        const panelContainer = this.add.container(this.cameras.main.width - 200, this.cameras.main.centerY);
+        panelContainer.setDepth(2);
+    
+        const panelWidth = this.cameras.main.width * 0.25;
+        const panelHeight = this.cameras.main.height * 0.9;  
 
-        // Borde del panel
-        this.add.rectangle(
-            this.cameras.main.centerX, 
-            this.cameras.main.centerY, 
+        const panelBorder = this.add.rectangle(
+            0, 
+            0, 
             panelWidth + 4, 
             panelHeight + 4, 
-            0x9147FF, 
+            0x000000, 
             0.7
-        ).setStrokeStyle(2, 0xFFFFFF).setDepth(2);
+        ).setStrokeStyle(2, 0xFFFFFF);
 
-        this.createTitleSection();
-        this.createStatsColumns();
-        this.createCapsuleButtons();
+        const panel = this.add.rectangle(
+            0, 
+            0, 
+            panelWidth, 
+            panelHeight, 
+            0x000000, 
+            0.5
+        );
+
+        panelContainer.add([panelBorder, panel]);
+
+        this.createTitleSection(panelContainer, panelWidth, panelHeight);
+        this.createCurrentStatsSection(panelContainer, panelWidth, panelHeight);
+        this.createBestRecordsSection(panelContainer, panelWidth, panelHeight);
+        this.createCapsuleButtons(panelContainer, panelHeight);
     }
-
-    createTitleSection() {
+    
+    createTitleSection(container, panelWidth, panelHeight) {
         const titleConfig = {
             'stomach': { text: 'STREAM INTERRUPTED!', color: '#FF4A4A' },
             'audience': { text: 'STREAM FAILED!', color: '#FF4A4A' },
             'time': { text: 'STREAM COMPLETED!', color: '#4AFF6A' },
             'manual': { text: 'STREAM ENDED', color: '#FFA84A' }
         }[this.endType] || { text: 'STREAM COMPLETED!', color: '#4AFF6A' };
-
+    
         // Título principal
-        this.add.text(this.cameras.main.centerX, 100, titleConfig.text, {
+        const title = this.add.text(0, -panelHeight/2, titleConfig.text, {
             fontFamily: 'Arial Black',
-            fontSize: '32px',
+            fontSize: '24px',
             color: titleConfig.color,
             stroke: '#000',
             strokeThickness: 4,
             shadow: { offsetX: 3, offsetY: 3, color: '#000', blur: 0, fill: true }
-        }).setOrigin(0.5).setDepth(3);
-
+        }).setOrigin(0.5, 0).setDepth(3);
+    
         // Subtítulo
-        this.add.text(this.cameras.main.centerX, 140, this.getSubtitleText(), {
+        const subtitle = this.add.text(0, -panelHeight/2 + 40, this.getSubtitleText(), {
             fontFamily: 'Arial',
-            fontSize: '20px',
+            fontSize: '18px',
             color: '#EEE',
             align: 'center',
-            wordWrap: { width: 450 }
-        }).setOrigin(0.5).setDepth(3);
+            wordWrap: { width: panelWidth * 0.9 }
+        }).setOrigin(0.5, 0).setDepth(3);
+        
+        container.add([title, subtitle]);
     }
-
-    createStatsColumns() {
-        const centerX = this.cameras.main.centerX;
-        const leftColX = centerX - 150;
-        const rightColX = centerX + 150;
-        const startY = 200;
-
-        // Columna izquierda - Estadísticas actuales
-        this.add.text(leftColX, startY - 40, 'SESSION STATS', {
+    
+    createCurrentStatsSection(container, panelWidth, panelHeight) {
+        const sectionTitle = this.add.text(0, -panelHeight/2 + 90, 'SESSION STATS', {
             fontFamily: 'Arial Black',
             fontSize: '20px',
             color: '#9147FF'
         }).setOrigin(0.5, 0).setDepth(3);
-
+    
         const currentStats = this.getFormattedStats();
+        const statsElements = [sectionTitle];
+        
         currentStats.forEach((stat, i) => {
-            const y = startY + (i * 35);
-            
-            // Etiqueta alineada a la izquierda
-            this.add.text(leftColX - 100, y, stat.label, {
+            const y = -panelHeight/2 + 140+ (i * 35);
+
+            const label = this.add.text(-panelWidth/2 + 20, y, stat.label, {
                 fontFamily: 'Arial',
                 fontSize: '16px',
                 color: '#CCC'
             }).setOrigin(0, 0.5).setDepth(3);
-            
-            // Valor alineado a la derecha
-            const valueText = this.add.text(leftColX + 100, y, stat.value, {
+
+            const valueText = this.add.text(panelWidth/2 - 20, y, stat.value, {
                 fontFamily: stat.isRecord ? 'Arial Black' : 'Arial',
                 fontSize: '16px',
                 color: stat.isRecord ? '#FFD700' : '#FFF'
             }).setOrigin(1, 0.5).setDepth(3);
             
-            // Estrella para récords
+            statsElements.push(label, valueText);
+
             if (stat.isRecord) {
-                this.add.image(leftColX + 115, y, 'star')
+                const star = this.add.image(panelWidth/2 - 5, y, 'star')
                     .setScale(0.5)
                     .setTint(0xFFD700)
                     .setDepth(3);
+                statsElements.push(star);
             }
         });
-
-        // Columna derecha - Mejores récords
-        this.add.text(rightColX, startY - 40, 'BEST RECORDS', {
+    
+        container.add(statsElements);
+    }
+    
+    createBestRecordsSection(container, panelWidth, panelHeight) {
+        const sectionTitle = this.add.text(0, -panelHeight/2 + 350, 'BEST RECORDS', {
             fontFamily: 'Arial Black',
             fontSize: '20px',
             color: '#FFD700'
         }).setOrigin(0.5, 0).setDepth(3);
-
+    
         const bestStats = this.getFormattedBestStats();
+        const statsElements = [sectionTitle];
+        
         bestStats.forEach((stat, i) => {
-            const y = startY + (i * 35);
-            
-            // Etiqueta alineada a la izquierda
-            this.add.text(rightColX - 100, y, stat.label, {
+            const y = -panelHeight/2 + 400 + (i * 35);
+
+            const label = this.add.text(-panelWidth/2 + 20, y, stat.label, {
                 fontFamily: 'Arial',
                 fontSize: '16px',
                 color: '#CCC'
             }).setOrigin(0, 0.5).setDepth(3);
-            
-            // Valor alineado a la derecha
-            this.add.text(rightColX + 100, y, stat.value, {
+
+            const value = this.add.text(panelWidth/2 - 20, y, stat.value, {
                 fontFamily: 'Arial Black',
                 fontSize: '16px',
                 color: '#FFD700'
             }).setOrigin(1, 0.5).setDepth(3);
+            
+            statsElements.push(label, value);
         });
+    
+        container.add(statsElements);
     }
+    
+    createCapsuleButtons(container, panelHeight) {
+        const buttonY = panelHeight/2 - 60;
 
-    createCapsuleButtons() {
-        const centerX = this.cameras.main.centerX;
-        const buttonY = this.cameras.main.height - 100;
-        
-        // Botón de Nueva Partida
         const newGameBtn = this.add.graphics()
             .fillStyle(0x9147FF, 1)
-            .fillRoundedRect(centerX - 160, buttonY - 25, 140, 50, 25)
+            .fillRoundedRect(-150, buttonY+25, 140, 50, 25)
             .setInteractive(
-                new Phaser.Geom.Rectangle(centerX - 160, buttonY - 25, 140, 50),
+                new Phaser.Geom.Rectangle(-150, buttonY+25, 140, 50),
                 Phaser.Geom.Rectangle.Contains
             )
             .on('pointerover', () => {
                 newGameBtn.clear()
                     .fillStyle(0xB267FF, 1)
-                    .fillRoundedRect(centerX - 160, buttonY - 25, 140, 50, 25);
+                    .fillRoundedRect(-150, buttonY+25, 140, 50, 25);
             })
             .on('pointerout', () => {
                 newGameBtn.clear()
                     .fillStyle(0x9147FF, 1)
-                    .fillRoundedRect(centerX - 160, buttonY - 25, 140, 50, 25);
+                    .fillRoundedRect(-150, buttonY+25, 140, 50, 25);
             })
-            .on('pointerdown', () => this.scene.start('GameScene'))
+            .on('pointerdown', () => {
+                if (this.music) this.music.stop();
+                this.sound.play('click'); 
+                this.scene.start('GameScene');
+            })            
             .setDepth(3);
         
-        this.add.text(centerX - 90, buttonY, 'NEW STREAM', {
+        const newGameText = this.add.text(-80, buttonY +50, 'NEW STREAM', {
             fontFamily: 'Arial Black',
             fontSize: '18px',
             color: '#FFF'
         }).setOrigin(0.5).setDepth(4);
-        
-        // Botón de Menú
+
         const menuBtn = this.add.graphics()
             .fillStyle(0x9147FF, 1)
-            .fillRoundedRect(centerX + 20, buttonY - 25, 140, 50, 25)
+            .fillRoundedRect(10, buttonY+25, 140, 50, 25)
             .setInteractive(
-                new Phaser.Geom.Rectangle(centerX + 20, buttonY - 25, 140, 50),
+                new Phaser.Geom.Rectangle(10, buttonY+25, 140, 50),
                 Phaser.Geom.Rectangle.Contains
             )
             .on('pointerover', () => {
                 menuBtn.clear()
                     .fillStyle(0xB267FF, 1)
-                    .fillRoundedRect(centerX + 20, buttonY - 25, 140, 50, 25);
+                    .fillRoundedRect(10, buttonY+25, 140, 50, 25);
             })
             .on('pointerout', () => {
                 menuBtn.clear()
                     .fillStyle(0x9147FF, 1)
-                    .fillRoundedRect(centerX + 20, buttonY - 25, 140, 50, 25);
+                    .fillRoundedRect(10, buttonY+25, 140, 50, 25);
             })
-            .on('pointerdown', () => this.scene.start('MenuScene'))
+            .on('pointerdown', () => {
+                if (this.music) this.music.stop();
+                this.sound.play('click'); 
+                this.scene.start('MenuScene');
+            })
+            
             .setDepth(3);
         
-        this.add.text(centerX + 90, buttonY, 'MAIN MENU', {
+        const menuText = this.add.text(80, buttonY +50, 'MAIN MENU', {
             fontFamily: 'Arial Black',
             fontSize: '18px',
             color: '#FFF'
         }).setOrigin(0.5).setDepth(4);
+        
+        container.add([newGameBtn, newGameText, menuBtn, menuText]);
     }
 
-    /* Métodos de ayuda */
     getDefaultStats() {
         return {
             streamTime: '00:00',
@@ -247,7 +284,6 @@ class GameOverScene extends Phaser.Scene {
         const savedStats = localStorage.getItem(this.storageKey);
         if (savedStats) {
             this.bestStats = JSON.parse(savedStats);
-            // Asegurarse de que streamTime es un número (segundos)
             if (typeof this.bestStats.streamTime === 'string') {
                 this.bestStats.streamTime = this.timeToSeconds(this.bestStats.streamTime);
             }
@@ -256,8 +292,7 @@ class GameOverScene extends Phaser.Scene {
 
     updateRecords() {
         let updated = false;
-        
-        // Actualizar todos los stats, incluyendo streamTime
+ 
         if (this.currentStats.streamTimeSec > (this.bestStats.streamTime || 0)) {
             this.bestStats.streamTime = this.currentStats.streamTimeSec;
             updated = true;

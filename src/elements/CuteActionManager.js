@@ -9,28 +9,24 @@ class CuteActionManager {
         
         this.createButton();
     }
-
-    createButton() {
-        const x = this.scene.cameras.main.centerX; // Centro de la cámara horizontal
-        const y = this.scene.cameras.main.height - 60; // Altura menos 60 píxeles
     
-        // Botón base redondeado
+    createButton() {
+        const x = this.scene.cameras.main.centerX; 
+        const y = this.scene.cameras.main.height - 60; 
+    
         this.button = this.scene.add.graphics().setDepth(60);
         this.drawGlossyButton(0xff69b4);
     
-        // Asegurarse de que el área de interacción esté centrada correctamente
         this.hitArea = this.scene.add.rectangle(
             x, y, 180, 50
         ).setInteractive({ useHandCursor: true }).setDepth(61);
     
-        // Asegurarse de que el texto esté centrado dentro del botón
         this.buttonText = this.scene.add.text(
             x, y,
             'Acting Cute',
             { font: '18px Arial', fill: '#ffffff', fontStyle: 'bold' }
-        ).setOrigin(0.5).setDepth(62); // setOrigin(0.5) centra el texto
+        ).setOrigin(0.5).setDepth(62); 
     
-        // Eventos de interacción
         this.hitArea.on('pointerover', () => this.drawGlossyButton(0xff1493));
         this.hitArea.on('pointerout', () => this.drawGlossyButton(0xff69b4));
         this.hitArea.on('pointerdown', () => this.executeAction());
@@ -41,14 +37,10 @@ class CuteActionManager {
         const y = this.scene.cameras.main.height - 60;
     
         this.button.clear();
-    
-        // Fondo principal redondeado
         this.button.fillStyle(color, 1);
-        this.button.fillRoundedRect(x - 90, y - 25, 180, 50, 25); // Asegúrate de que la posición x se ajuste para centrarlo
-    
-        // Brillo tipo glaseado superior
+        this.button.fillRoundedRect(x - 90, y - 25, 180, 50, 25); 
         this.button.fillStyle(0xFFFFFF, 0.4);
-        this.button.fillRoundedRect(x - 80, y - 22, 160, 15, 15); // Ajusta también el brillo
+        this.button.fillRoundedRect(x - 80, y - 22, 160, 15, 15); 
     }
     
 
@@ -59,6 +51,7 @@ class CuteActionManager {
     }
 
     executeAction() {
+        this.scene.sound.play('miau');
         if (this.scene.mokbanManager?.displayStomach <= 10) {
             this.scene.addDialogueBox("Too full to act cute!", "Miao Mao", {
                 boxColor: 0x000000,
@@ -111,11 +104,11 @@ class CuteActionManager {
 
     startCooldown() {
         this.cooldown = true;
-        this.drawGlossyButton(0x888888); // Cambiar el color del botón al gris
+        this.drawGlossyButton(0x888888); 
 
         this.cooldownTimer = this.scene.time.delayedCall(5000, () => {
             this.cooldown = false;
-            this.drawGlossyButton(0xff69b4); // Restaurar el color original
+            this.drawGlossyButton(0xff69b4); 
             this.cooldownTimer = null;
         });
     }
@@ -125,24 +118,27 @@ class CuteActionManager {
         this.isActionActive = true;
         
         if (stomachLevel <= 10) {
-            // Versión "lleno lleno" con pupilas especiales
-            this.scene.streamer.setTexture('streamerTG');
-            this.scene.OjosC1_02.setVisible(false);
-            this.scene.pupilasc1.setTexture('full'); // Pupilas especiales
-            this.scene.pupilasc1.setVisible(true);
-        } else if (stomachLevel <= 50) {
-            // Versión "medio lleno"
-            this.scene.streamer.setTexture('streamerTG');
-            this.scene.OjosC1_02.setVisible(false);
-            this.scene.pupilasc1.setVisible(false);
-        } else {
-            // Versión normal
-            this.scene.streamer.setTexture('streamerT');
-            this.scene.OjosC1_02.setTexture('ojosc2');
-            this.scene.pupilasc1.setTexture('pupilasc2');
+            this.scene.streamer.setTexture('streamertg');
+            this.scene.ojosc_cc.setVisible(false);
+            this.scene.pupilasc.setTexture('full').setVisible(true);
+        } 
+        else if (stomachLevel <= 50) {
+            this.scene.streamer.setTexture('streamertg');
+            this.scene.ojosc_cc.setVisible(false);
+            this.scene.pupilasc.setVisible(false);
+        } 
+        else {
+            this.scene.streamer.setTexture('streamert');
+            // Verificar si existen antes de usarlas
+            if (this.scene.textures.exists('ojosc_cc')) {
+                this.scene.ojosc_cc.setTexture('ojostiernos');
+            }
+            if (this.scene.textures.exists('pupilasc')) {
+                this.scene.pupilasc.setTexture('pupilastiernas');
+            }
+            this.scene.ojosc_cc.setVisible(true);
+            this.scene.pupilasc.setVisible(true);
         }
-
-        // Mostrar diálogo
         this.scene.addDialogueBox(result.message, "Miao Mao", {
             boxColor: 0x000000,
             borderColor: 0xFFFFFF,
@@ -150,14 +146,12 @@ class CuteActionManager {
             borderThickness: 2
         });
 
-        // Efectos especiales
         if (result.isOverusing) {
             this.scene.cameras.main.shake(300, 0.02);
         } else {
             this.scene.cameras.main.flash(200, 255, 192, 203);
         }
 
-        // Animación del botón
         this.scene.tweens.add({
             targets: this.hitArea,
             scaleX: 0.9,
@@ -166,7 +160,6 @@ class CuteActionManager {
             yoyo: true
         });
 
-        // Mensaje de chat
         const username = UserGenerator.generateUsername();
         const userColor = UserGenerator.generateUserColor();
         const chatMessage = result.isOverusing ? 
@@ -174,7 +167,6 @@ class CuteActionManager {
             MessageGenerator.getRandomPositiveReaction();
         this.chatSystem.addSpecialMessage(username, chatMessage, userColor);
 
-        // Temporizador para restaurar apariencia después de 1 segundo
         this.scene.time.delayedCall(1000, () => {
             this.isActionActive = false;
             this.scene.mokbanManager.updateStreamerAppearance();

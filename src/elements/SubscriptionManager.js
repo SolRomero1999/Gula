@@ -34,6 +34,7 @@ class SubscriptionManager {
     }
 
     addSubscriber() {
+        this.scene.sound.play('follow');
         if (this.subscriberNames.length === 0) {
             console.log("No hay más nombres de usuarios disponibles para suscripción.");
             return; 

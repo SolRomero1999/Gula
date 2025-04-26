@@ -6,13 +6,10 @@ class MokbanManager {
         this.sushiItem = null;      
         this.stomachCapacity = 100;
         this.displayStomach = 100;
-        
         this.currentBowlLevel = 1;
         this.maxBowlLevel = 5;
-        
         this.currentSushiLevel = 1;
         this.maxSushiLevel = 12;
-        
         this.foodConsumptionRate = 10;  
         this.sushiConsumptionRate = 3;  
         this.stomachRecoveryRate = 3;
@@ -60,7 +57,7 @@ class MokbanManager {
         this.hands = this.scene.add.sprite(
             this.scene.cameras.main.centerX,
             this.scene.cameras.main.centerY + 5,
-            'ManosFull'
+            'manosfull'
         ).setVisible(false)
          .setDepth(30);
 
@@ -112,12 +109,12 @@ class MokbanManager {
         );
         
         this.foodItem.on('pointerdown', () => {
+            this.scene.sound.play('sorbido');
             if (!this.scene.isGameOver) {
                 this.handleFoodClick();
             }
         });
-        
-        // Se eliminó la animación flotante
+
     }
     
     createSushi() {
@@ -139,17 +136,17 @@ class MokbanManager {
         );
         
         this.sushiItem.on('pointerdown', () => {
+            this.scene.sound.play('bocado');
             if (!this.scene.isGameOver) {
                 this.handleSushiClick();
             }
         });
-        
-        // Se eliminó la animación flotante
+
     }
     
     handleFoodClick() {
         if (this.currentBowlLevel >= this.maxBowlLevel) {
-            this.showEmptyBowlMessage("¡El tazón de ramen está vacío!");
+            this.showEmptyBowlMessage("The ramen bowl is empty!");
             return;
         }
         
@@ -170,7 +167,7 @@ class MokbanManager {
     
     handleSushiClick() {
         if (this.currentSushiLevel >= this.maxSushiLevel) {
-            this.showEmptyBowlMessage("¡No quedan más piezas de sushi!");
+            this.showEmptyBowlMessage("There are no more pieces of sushi left!");
             return;
         }
         
@@ -371,29 +368,29 @@ class MokbanManager {
     }
     
     updateStreamerAppearance() {
-        if (!this.scene.streamer || !this.scene.OjosC1_02 || !this.scene.pupilasc1) return;
+        if (!this.scene.streamer || !this.scene.ojosc_cc || !this.scene.pupilasc) return;
         
         if (this.scene.cuteActionManager?.isActionActive) return;
 
         if (this.displayStomach <= 10) {
             this.hands.setVisible(true);
-            this.setStreamerAppearance('streamerG2', 'caragordo', 'full'); 
+            this.setStreamerAppearance('streamergg', 'caragordo', 'full'); 
         } else {
             this.hands.setVisible(false);
             if (this.displayStomach <= 50) {
-                this.setStreamerAppearance('streamerG', 'OjosC1_03', 'pupilasc1');
+                this.setStreamerAppearance('streamerg', 'ojosc_ccc', 'pupilasc');
             } else {
-                this.setStreamerAppearance('streamer', 'OjosC1_02', 'pupilasc1');
+                this.setStreamerAppearance('streamer', 'ojosc_cc', 'pupilasc');
             }
         }
     }
 
     setStreamerAppearance(bodyTexture, eyesTexture, pupilsTexture) {
         this.scene.streamer.setTexture(bodyTexture);
-        this.scene.OjosC1_02.setTexture(eyesTexture);
-        this.scene.OjosC1_02.setVisible(true);
-        this.scene.pupilasc1.setTexture(pupilsTexture);
-        this.scene.pupilasc1.setVisible(true);
+        this.scene.ojosc_cc.setTexture(eyesTexture);
+        this.scene.ojosc_cc.setVisible(true);
+        this.scene.pupilasc.setTexture(pupilsTexture);
+        this.scene.pupilasc.setVisible(true);
     }
     
     updateStomachBarColor(color) {

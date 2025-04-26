@@ -11,7 +11,6 @@ class GameTimer {
     }
 
     createLiveDisplay() {
-        // Crear el texto del timer
         this.liveText = this.scene.add.text(
             this.scene.cameras.main.width - 30, 20,
             '🔴 LIVE 00:00', {
@@ -25,7 +24,6 @@ class GameTimer {
         .setOrigin(1, 0)
         .setDepth(50);
 
-        // Crear zona interactiva que cubre todo el texto
         const textBounds = this.liveText.getBounds();
 
         this.liveButton = this.scene.add.zone(
@@ -42,7 +40,6 @@ class GameTimer {
             }
         });
 
-        // Efecto hover sobre toda el área
         this.liveButton.on('pointerover', () => {
             if (!this.scene.isGameOver) {
                 this.liveText.setStyle({ fill: '#ff5555' });
@@ -67,19 +64,15 @@ class GameTimer {
     updateTimer() {
         if (!this.isRunning) return;
 
-        // Calcular tiempo transcurrido exacto
         this.elapsedTime = this.scene.time.now - this.startTime;
         const remaining = Math.max(0, this.duration - this.elapsedTime);
 
-        // Actualizar display
         this.liveText.setText(`🔴 LIVE ${this.formatTime(remaining)}`);
 
-        // Actualizar área interactiva
         const bounds = this.liveText.getBounds();
         this.liveButton.setPosition(bounds.centerX, bounds.centerY);
         this.liveButton.setSize(bounds.width, bounds.height);
 
-        // Cambiar color cuando quedan 30 segundos
         if (remaining <= 30000 && remaining > 0) {
             this.liveText.setStyle({ fill: '#ff9c4a' });
         }
@@ -87,7 +80,6 @@ class GameTimer {
         if (remaining <= 0 && !this.timeUpTriggered) {
             this.timeUp();
         } else {
-            // Programar próxima actualización para el próximo segundo exacto
             const nextUpdate = 1000 - (this.elapsedTime % 1000);
             this.scene.time.delayedCall(nextUpdate, () => this.updateTimer(), [], this);
         }
@@ -116,4 +108,3 @@ class GameTimer {
         this.liveButton?.destroy();
     }
 }
-

@@ -25,12 +25,11 @@ class MoneyManager {
         }).setDepth(11);
 
         this.moneyText.setOrigin(0, 0);
-        this.moneyText.setPosition(60, 20); // dejando espacio para el ícono
+        this.moneyText.setPosition(60, 20); 
 
         this.panel = this.scene.add.graphics().setDepth(10);
         this.updatePanelBackground();
 
-        // Ícono ajustado ligeramente a la izquierda
         this.coinIcon = this.scene.add.text(16, 20, '💰', {
             font: `28px Arial`
         }).setDepth(12);

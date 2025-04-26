@@ -151,7 +151,6 @@ class SimpleChatSystem {
     }
    
     cleanup() {
-        // 1. Limpiar eventos
         if (this.scene) {
             this.scene.events.off('eat');
             this.scene.events.off('inactivityWarning');
@@ -160,7 +159,6 @@ class SimpleChatSystem {
             this.scene.events.off('fullStomachPenalty');
         }
 
-        // 2. Solo resetear las variables, Phaser se encargará de los objetos
         this.chatMessages = [];
         this.chatContainer = null;
     }
